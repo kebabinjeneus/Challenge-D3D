@@ -1,7 +1,7 @@
 # Challenge-D3D
 
 ## Hoe gebruik je het project
-Niet, er is nog niks.
+Hallo
 
 ## Hoe gebruik je git
 git clone [ssh download link] -> to clone new repository  
