@@ -52,8 +52,8 @@ a.sidebar-links:hover .sidebar-button {
 }
 
 div.footer {
-    /* position: fixed; */
-    /* bottom: 10px; */
+    position: fixed; 
+    bottom: 10%; 
     /* margin-left: 5%; */
     /* width: 25%; */
     margin-top: 50px;
