@@ -1,3 +1,7 @@
+* {
+    font-family: sans-serif;
+}
+
 html, body {
     height: 100%;
     margin: 0px;
@@ -12,14 +16,14 @@ div.header {
     margin-top: 5px;
     margin-bottom: 25px;
     border-radius: 40px;
-    background-color: blue;
+    background-color: lightgreen;
 }
 
 div.sidebar {
     width: 25%;
     height: 80%;
     margin-left: 5%;
-    background-color: purple;
+    /* background-color: lightgreen; */
     border-radius: 25px;
     padding-right: 5px;
 }
@@ -32,7 +36,7 @@ div.main {
 
 div.sidebar-button {
     margin-left: 10%;
-    background-color: tomato;
+    background-color: green;
     height: 30px;
     width: 80%;
     border-radius: 10px;
@@ -40,8 +44,8 @@ div.sidebar-button {
     text-align: center;
 }
 
-div.sidebar-button:hover .a {
-    background-color: firebrick;
+a.sidebar-links:hover .sidebar-button {
+    background-color: darkgreen;
     height: 32px;
     color: gray;
     font-size: 21px;
