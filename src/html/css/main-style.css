@@ -8,15 +8,20 @@ div.header {
     text-align: center;
     width: 90%;
     margin-left: 5%;
-    height: 10%;
-    padding-top: 5px;
-    padding-bottom: 5px;
+    height: 100px;
+    margin-top: 5px;
+    margin-bottom: 25px;
+    border-radius: 40px;
+    background-color: blue;
 }
 
 div.sidebar {
     width: 25%;
     height: 80%;
     margin-left: 5%;
+    background-color: purple;
+    border-radius: 25px;
+    padding-right: 5px;
 }
 
 div.main {
@@ -25,11 +30,31 @@ div.main {
     margin-right: 5%;
 }
 
+div.sidebar-button {
+    margin-left: 10%;
+    background-color: tomato;
+    height: 30px;
+    width: 80%;
+    border-radius: 10px;
+    margin-top: 10px;
+    text-align: center;
+}
+
+div.sidebar-button:hover .a {
+    background-color: firebrick;
+    height: 32px;
+    color: gray;
+    font-size: 21px;
+}
+
 div.footer {
-    position: fixed;
-    bottom: 10px;
-    margin-left: 5%;
-    width: 25%;
+    /* position: fixed; */
+    /* bottom: 10px; */
+    /* margin-left: 5%; */
+    /* width: 25%; */
+    margin-top: 50px;
+    margin-left: 10px;
+    margin-right: 5px;
 }
 
 div.left {
@@ -53,10 +78,10 @@ a.sidebar-links {
     text-decoration: none;
 }
 
-a.sidebar-links:hover {
+/* a.sidebar-links:hover {
     color: gray;
     font-size: 21px;
-}
+} */
 
 h2 {
     text-align: center;
