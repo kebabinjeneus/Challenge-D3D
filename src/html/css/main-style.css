@@ -4,108 +4,121 @@
 
 html, body {
     height: 100%;
-    margin: 0px;
-    padding: 0px;
+    margin: 0;
 }
 
-div.header {
+.title {
+    padding: 0.5%;
     text-align: center;
-    width: 90%;
-    margin-left: 5%;
-    height: 100px;
-    margin-top: 5px;
-    margin-bottom: 25px;
-    border-radius: 40px;
-    background-color: lightgreen;
+    background: green;
+    border-bottom-style: solid;
+    border-bottom-color: black;
+    border-bottom-width: 4px;
+    box-shadow: 3px 4px 6px grey;
+}
+.title h1 {
+    color: white;
+    font-size: 300%;
+    border-bottom-color: green;
 }
 
-div.sidebar {
-    width: 25%;
-    height: 80%;
-    margin-left: 5%;
-    /* background-color: lightgreen; */
-    border-radius: 25px;
-    padding-right: 5px;
-}
-
-div.main {
-    width: 60%;
-    height: 80%;
-    margin-right: 5%;
-}
-
-div.sidebar-button {
-    margin-left: 10%;
-    background-color: green;
-    height: 30px;
-    width: 80%;
-    border-radius: 10px;
-    margin-top: 10px;
-    text-align: center;
-}
-
-a.sidebar-links:hover .sidebar-button {
-    background-color: darkgreen;
-    height: 32px;
-    color: gray;
-    font-size: 21px;
-}
-
-div.footer {
-    position: fixed; 
-    bottom: 10%; 
-    /* margin-left: 5%; */
-    /* width: 25%; */
-    margin-top: 50px;
-    margin-left: 10px;
-    margin-right: 5px;
-}
-
-div.left {
+.left {
     float: left;
+    width: 25%;
+    top: 0;
+    position: sticky;
 }
 
-div.right {
-    float: right;
+.navbar {
+    height: auto;
+    margin-top: 10%;
+    margin-left: 5%;
+    margin-right: 5%;
+    margin-bottom: 15%;
+    background-color: green;
+    border-top-left-radius: 20px;
+    box-shadow: 3px 4px 6px grey;
 }
 
-p.status {
-    margin: 7px;
-    line-height: 10px;
-    color: gray;
-}
-
-
-a.sidebar-links {
+.navbar a {
+    display: block;
     color: black;
-    font-size: 20px;
+    padding: 10%;
     text-decoration: none;
 }
 
-/* a.sidebar-links:hover {
-    color: gray;
-    font-size: 21px;
-} */
+.navbar a:hover {
+    color: white;
+    padding: 10%;
+    text-decoration: none;
+    background-color: black;
+}
 
-h2 {
+.statbar {
+    height: auto;
+    margin: 5%;
+    background-color: green;
+    box-shadow: 3px 4px 6px grey;
+}
+
+.statbar h3 {
     text-align: center;
+    border-bottom: solid;
+    border-bottom-width: 1.5px;
+    padding: 2%;
+    margin: 0;
 }
 
-.wrapper {
-    width: 100%;
-    height: 30px;
-    margin-bottom: 5px;
+.status {
+    list-style-image: url('groen.png');
+    list-style-position: inside;
+    color: black; 
+    padding: 4%;
+    padding-left: 1%;
+    padding-bottom: 5%;
+    margin-top: 0;
+    margin-left: 5%;
+    font-size: 90%;
 }
 
-.bar {
+.right {
     height: 100%;
+    float: left;
+    width: 75%;
+    padding-bottom: 5%;
+    
 }
 
-.bar.left {
-    border-top-left-radius: 10px;
-    border-bottom-left-radius: 10px;
+.content {
+    margin-top: 3.5%;
+    margin-left: 5%;
+    margin-right: 5%;
+    margin-bottom: 3.5%;
+    background-color: green;
+    box-shadow: 3px 4px 6px grey;
 }
-.bar.right {
-    border-top-right-radius: 10px;
-    border-bottom-right-radius: 10px;
+
+.content h2 {
+    color: white;
+    border-bottom: solid black;
+    margin-bottom: 0;
+    padding-bottom: 0.5%;
+    padding-left: 1%;
+    padding-top: 1%;
+}
+
+.dagen {
+    padding: 1%;
+    border-bottom: solid black 1.5px;
+}
+
+.probar1 {
+    background-color: gray;
+    border-radius: 50px;
+}
+
+.probar2 {
+    background-color: yellow;
+    text-align: center;
+    border-radius: inherit;
 }
