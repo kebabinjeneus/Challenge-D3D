@@ -23,7 +23,6 @@ html, body {
 .title h1 {
     color: white;
     font-size: 300%;
-    border-bottom-color: green;
 }
 
 .left {
@@ -35,6 +34,7 @@ html, body {
 
 .navbar {
     height: auto;
+    max-width: 200px;
     margin-top: 10%;
     margin-left: 5%;
     margin-right: 5%;
@@ -137,4 +137,24 @@ html, body {
     background-color:white;
     border:solid 1px;
     
+}
+
+.tables {
+    border-collapse: collapse;
+    background-color: green;
+    margin: 3.5%;
+    width: 93%;
+    min-width: 600px;
+    border: 2px solid black;
+}
+
+.tables td {
+    border: 1px solid black;
+    padding: 0.5%;
+}
+
+.tables th {
+    border: 2px solid black;
+    padding: 1%;
+    color:white;
 }
