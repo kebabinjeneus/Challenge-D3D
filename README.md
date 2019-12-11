@@ -1,7 +1,12 @@
 # Challenge-D3D
 
 ## Hoe gebruik je het project
-Hallo
+Er zijn meerdere branches:
+master -> Permanente branch, product is klaar staat.
+2-ontwerp-site -> Hier wordt gewerkt aan de website
+10-API -> Hier wordt gewerkt aan de API
+Database -> Hier wordt gewerkt aan de database
+ESP -> Hier wordt gewerkt aan de LED-BaroMeter
 
 ## Hoe gebruik je git
 git clone [ssh download link] -> to clone new repository  
