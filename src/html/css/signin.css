@@ -1,10 +1,11 @@
 body {
     font-family: Arial, Helvetica, sans-serif;
+    background-color: darkgreen;
 }
 {box-sizing: border-box}
 
 input[type=text], input[type=password], input[type=number] {
-    width: 100%;
+    width: 96.5%;
     padding: 12px;
     margin: 5px 0 22px 0;
     display: inline-block;
@@ -38,23 +39,30 @@ button:hover {
 }
 
 .cancelbtn {
-  padding: 14px 20px;
-  background-color: #f44333;
+    padding: 14px 20px;
+    background-color: #f44333;
 }
 
-.cancelbtn, .signupbtn {
-  float: left;
-  width: 50%;
+.cancelbtn, .signupbtn, .loginbtn{
+    float: left;
+    width: 50%;
+}
+
+.signupbtnlogin {
+    width: 100%;
 }
 
 .signup {
-  padding: 16px;
+    margin: 5%;
+    padding: 16px;
+    background-color: white;
+    max-width: 800px
 }
 
 .clearfix::after {
-  content: "";
-  clear: both;
-  display: table;
+    content: "";
+    clear: both;
+    display: table;
 }
 
 @media screen and (max-width: 300px) {
