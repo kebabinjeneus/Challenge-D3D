@@ -23,11 +23,12 @@ hr {
     margin-bottom: 25px;
 }
 
+/*bottons zijn op de verkeerde positie van signup*/
 button {
     background-color: #4CAF50;
     color: white;
     padding: 14px 20px;
-    margin: 2% 0;
+    margin: 1% 0 0 0;
     border: none;
     cursor: pointer;
     width: 100%;
@@ -36,6 +37,11 @@ button {
 
 button:hover {
     opacity:1;
+}
+
+.options {
+    display: inline-block;
+    width: 100%;
 }
 
 .cancelbtn {
@@ -56,7 +62,8 @@ button:hover {
     margin: 5%;
     padding: 16px;
     background-color: white;
-    max-width: 800px
+    max-width: 900px;
+    height: 90%;
 }
 
 .clearfix::after {
