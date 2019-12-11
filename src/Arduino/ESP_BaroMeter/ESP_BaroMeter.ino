@@ -21,6 +21,12 @@
 const char* ssid = "spot";                // YourWiFiName
 const char* password = "?Spot!1234";      // YourWiFiPassword
 
+// Server settings
+const char* host = "";
+
+// Set the LCD address to 0x27 for a 16 chars and 2 line display
+LiquidCrystal_I2C lcd(0x27, 16, 4);
+
 void setup() {
   // Open serial connection, to show the result of the program and connect to the WiFi network
   Serial.begin(115200);
@@ -38,13 +44,13 @@ void setup() {
 
   WiFi.mode(WIFI_STA);
   delay(1000);
-  WiFi.begin(ssid, pass);
+  WiFi.begin(ssid, password);
   
   while (WiFi.status() != WL_CONNECTED) { // If the ESP isn't connected to a wifi network, display this
     delay(500);
-    Serial.println("Connecting to WiFi..");
+    Serial.println("Connecting to WiFi...");
   }
-  Serial.println("Connected to the WiFi network");
+  Serial.printf("Connected to the WiFi network: %s\n", ssid);
 }
 
 void loop() {
