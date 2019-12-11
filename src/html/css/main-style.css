@@ -11,6 +11,10 @@ html, body {
     background-attachment: fixed;
 }
 
+.singup {
+    
+}
+
 .title {
     padding: 0.5%;
     text-align: center;
@@ -30,11 +34,11 @@ html, body {
     width: 25%;
     top: 0;
     position: sticky;
+    max-width: 250px;
 }
 
 .navbar {
     height: auto;
-    max-width: 200px;
     margin-top: 10%;
     margin-left: 5%;
     margin-right: 5%;
@@ -87,7 +91,7 @@ html, body {
 
 .right {
     height: 100%;
-    float: left;
+    float: right;
     width: 75%;
     padding-bottom: 5%;
     
