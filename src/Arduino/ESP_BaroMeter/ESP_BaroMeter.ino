@@ -28,20 +28,21 @@ const char* ssid = "spot";            // YourWiFiName
 const char* password = "?Spot!1234";  // YourWiFiPassword
 
 // Server settings
-const char *host = "192.168.56.1";    //Your pc or server (database) IP, example : 192.168.0.0 , if you are a windows os user, open cmd, then type ipconfig then look at IPv4 Address.
+const char* host = "192.168.56.1";    //Your pc or server (database) IP, example : 192.168.0.0 , if you are a windows os user, open cmd, then type ipconfig then look at IPv4 Address.
 
 /*LCD SETTINGS*/
 // set the LCD number of columns and rows
-int LCDColumns = 16;
-int LCDRows = 2;
+int LCDColumns = 20;
+int LCDRows = 4;
 
 // Set the LCD address to 0x27 for a 16 chars and 2 line display
 LiquidCrystal_I2C lcd(0x27, LCDColumns, LCDRows);
 
 /*Hardcoded text to be displayed at the LCD screen, this info must be sent 
   from the Raspberry Pi, but a connection must be established first*/
-float used_Today_kWh = 28.9f;
-float used_ThisHour_kWh = 0.02069f;
+float used_today_kWh = 8.4f;
+float used_current_kWh = 0.0154f;
+unsigned short int used_today_gas_m3 = 500; // Not negative and from 0 to 65,535, kubieke meter
 
 void setup() {
   // Open serial connection, to show the result of the program and connect to the WiFi network
@@ -84,21 +85,50 @@ void setup() {
 }
 
 void loop() {
-  /*Display of how much energy has been used today*/
-  lcd.setCursor(0,0); // set cursor to first column, first row
-  Serial.printf("Today: %.6f*kWh\n", used_Today_kWh);
-  lcd.printf("Today: %.6f", used_Today_kWh);
-  lcd.setCursor(0,1); // set cursor to first column, second row
-  lcd.print("*kWh");
-  delay(5000);        // Refresh screen every 5 seconds
-  lcd.clear();        // clears the display to print new message
-  lcd.setCursor(0,0); // set cursor to first column, second row
-  Serial.printf("Last hour: %.6f *kWh\n", used_ThisHour_kWh);
-  lcd.printf("Last hour: %.6f", used_ThisHour_kWh);
-  lcd.setCursor(0,1); // set cursor to first column, second row
-  lcd.print("*kWh");
-  delay(5000);        // Refresh screen every 5 seconds
-  lcd.clear();        // clears the display to print new message
+  /*Display of how much current is used at the moment and has been used today*/
+  Serial.println("      Bewust-E");
+  Serial.println("Stroomverbruik:");
+  Serial.printf("Huidig %.4f kWh\n", used_current_kWh);
+  Serial.printf("Dag: %.4f kWh\n", used_today_kWh);
+  // LCD Scherm
+  lcd.setCursor(6,0); // Set cursor to third column, first row
+  lcd.printf("Bewust-E");
+  lcd.setCursor(0,1); // Set cursor to first column, second row
+  lcd.print("Stroomverbruik:");
+  lcd.setCursor(0,2);
+  lcd.printf("Huidig:   %.4f kWh", used_current_kWh);
+  lcd.setCursor(0,3);
+  lcd.printf("Dag:      %.4f kWh", used_today_kWh);
+  delay(7000);        // Refresh screen every 5 seconds
+  lcd.clear();        // Clears the display to print new message
+
+  /*Display of how much gas has been used today*/
+  Serial.println("      Bewust-E");
+  Serial.println("Gasverbruik:");
+  Serial.printf("Dag: %hu m3\n", used_today_gas_m3);
+  // LCD Scherm
+  lcd.setCursor(6,0); // Set cursor to third column, first row
+  lcd.printf("Bewust-E");
+  lcd.setCursor(0,1); // Set cursor to first column, second row
+  lcd.print("Gasverbruik:");
+  lcd.setCursor(0,2);
+  lcd.printf("Dag:          %hu m3", used_today_gas_m3);
+  delay(7000);        // Refresh screen every 5 seconds
+  lcd.clear();        // Clears the display to print new 
+
+// LCD screen display layout:
+//    Bewust-E
+//Stroom:
+//Huidig:
+//Dag:
+//
+//5 sec delay
+//
+//    Bewust-E
+//Gas:
+//Dag:
+
+
 
 //float max_used_ThisHour_kWh = 0.10000f;
 //if (max_used_ThisHour > used_ThisHour) {
