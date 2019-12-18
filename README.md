@@ -6,7 +6,7 @@ master -> Permanente branch, product is klaar staat<br/>
 2-ontwerp-site -> Hier wordt gewerkt aan de website<br/>
 10-API -> Hier wordt gewerkt aan de API<br/>
 Database -> Hier wordt gewerkt aan de database<br/>
-ESP -> Hier wordt gewerkt aan de LED-BaroMeter<br/>
+ESP -> Hier wordt gewerkt aan de LED-BaroMeter, de main code die op de esp staat is ESP_BaroMeter<br/>
 
 ## Hoe gebruik je git
 git clone [ssh download link] -> to clone new repository<br/>
