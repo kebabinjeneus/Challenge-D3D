@@ -11,24 +11,28 @@
 *https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266WiFi
 */
 
+/* Wiring:
+ * GND -> GND
+ * VCC -> VIN
+ * SDA -> D2
+ * SCL -> D1
+ */
+
 // Libraries to be able to connect the esp8266 to a WiFi network and to let the LCD and LED work properly.
 #include <Wire.h>
 #include <ESP8266WiFi.h>
 #include <LiquidCrystal_I2C.h>
 
-// Need to add Display(LCD) and LED
-//#define LCD D6
+// Need to add LED
 //#define LED D7
 
 /*WIFI SETTINGS*/
 // Variables to connect esp to a network
 // This is my phone network so I can use it anywhere
 // IDEA, connect esp with the raspberry pi, that will give the SSID and PASSWORD to the ESP8266 for easy connection
-const char* ssid = "spot";            // YourWiFiName
-const char* password = "?Spot!1234";  // YourWiFiPassword
-
-// Server settings
-const char* host = "192.168.56.1";    //Your pc or server (database) IP, example : 192.168.0.0 , if you are a windows os user, open cmd, then type ipconfig then look at IPv4 Address.
+const char* ssid="spot";            // YourWiFiName
+const char* password="?Spot!1234";  // YourWiFiPassword
+const char* host="192.168.56.1";    // LOCAL IPv4 ADDRESS...ON CMD WINDOW TYPE ipconfig/all
 
 /*LCD SETTINGS*/
 // set the LCD number of columns and rows
@@ -85,6 +89,18 @@ void setup() {
 }
 
 void loop() {
+  // LCD screen display layout:
+  //    Bewust-E
+  //Stroom:
+  //Huidig:
+  //Dag:
+  //
+  //5 sec delay
+  //
+  //    Bewust-E
+  //Gas:
+  //Dag:
+
   /*Display of how much current is used at the moment and has been used today*/
   Serial.println("      Bewust-E");
   Serial.println("Stroomverbruik:");
@@ -115,20 +131,6 @@ void loop() {
   lcd.printf("Dag:          %hu m3", used_today_gas_m3);
   delay(7000);        // Refresh screen every 5 seconds
   lcd.clear();        // Clears the display to print new 
-
-// LCD screen display layout:
-//    Bewust-E
-//Stroom:
-//Huidig:
-//Dag:
-//
-//5 sec delay
-//
-//    Bewust-E
-//Gas:
-//Dag:
-
-
 
 //float max_used_ThisHour_kWh = 0.10000f;
 //if (max_used_ThisHour > used_ThisHour) {
