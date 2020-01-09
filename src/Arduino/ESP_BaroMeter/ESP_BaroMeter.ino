@@ -9,6 +9,16 @@
 *Libraries:
 *https://github.com/marcoschwartz/LiquidCrystal_I2C/archive/master.zip
 *https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266WiFi
+*
+*Connection LCD:
+**************
+* LCD -> ESP *
+**************
+* GND -> GND *
+* VCC -> VIN *
+* SDA -> D2  *
+* SCL -> D1  *
+**************
 */
 
 // Libraries to be able to connect the esp8266 to a WiFi network and to let the LCD and LED work properly.
@@ -16,9 +26,7 @@
 #include <ESP8266WiFi.h>
 #include <LiquidCrystal_I2C.h>
 
-// Need to add Display(LCD) and LED
-//#define LCD D6
-//#define LED D7
+//#define LED D7      // add LED  
 
 /*WIFI SETTINGS*/
 // Variables to connect esp to a network
@@ -89,7 +97,7 @@ void loop() {
   Serial.println("      Bewust-E");
   Serial.println("Stroomverbruik:");
   Serial.printf("Huidig %.4f kWh\n", used_current_kWh);
-  Serial.printf("Dag: %.4f kWh\n", used_today_kWh);
+  Serial.printf("Dag:   %.4f kWh\n", used_today_kWh);
   // LCD Scherm
   lcd.setCursor(6,0); // Set cursor to third column, first row
   lcd.printf("Bewust-E");
@@ -116,18 +124,19 @@ void loop() {
   delay(7000);        // Refresh screen every 5 seconds
   lcd.clear();        // Clears the display to print new 
 
-// LCD screen display layout:
-//    Bewust-E
-//Stroom:
-//Huidig:
-//Dag:
-//
-//5 sec delay
-//
-//    Bewust-E
-//Gas:
-//Dag:
+/*
+LCD screen display layout:
+    Bewust-E
+Stroomverbruik:
+Huidig:
+Dag:
 
+5 sec delay
+
+    Bewust-E
+Gasverbruik:
+Dag:
+*/
 
 
 //float max_used_ThisHour_kWh = 0.10000f;
