@@ -90,8 +90,8 @@ PubSubClient client(espClient);
 
 void setup(){
   // Open serial connection, to show the result of the program and connect to the WiFi network
-  delay(1000);
   Serial.begin(115200);
+  
   WiFi.mode(WIFI_OFF);                            //Prevents reconnection issue (taking too long to connect)
   delay(1000);
   WiFi.mode(WIFI_STA);                            //This line hides the viewing of ESP as wifi hotspot
@@ -249,8 +249,7 @@ void lcd_gasverbruik() {
   lcd.setCursor(0,2);
   lcd.printf("Dag:          %hu m3", used_today_gas_m3);
   delay(3000);                                    // Refresh screen every 7 seconds
-  lcd.clear();                                    // Clears the display to print new
-
+  lcd.clear();                                    // Clears the display to print new message
 }
 
 void led_algortihm() {
