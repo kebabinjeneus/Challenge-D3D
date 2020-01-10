@@ -2,15 +2,16 @@
  * Author: Appie Strorman
  * The Challenge
  * ESP BaroMeter
- * 18/12/2019
- * V1.3
+ * 1/10/2020
+ * V1.4
+ * 
  * Includes:
  * LCD connection
  * Led Strip connection
  * If the WiFi connection fails, then the leds turn white and the display displays Reconnecting to WiFi...
+ * Connection with the MQTT Broker CLOUDMQTT: throught this the esp can communicate with the Raspberry Pi, it will read the content that is published bij the Raspberry Pi
  * 
  * Missing:
- * Connection with the raspberry Pi
  * Algortihm to display the correct led color
  * 
  * TOOLS/BOARD/"Adaruit Feather HUZZAH ESP8266"
@@ -19,17 +20,18 @@
  * Libraries:
  * https://github.com/marcoschwartz/LiquidCrystal_I2C/archive/master.zip
  * https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266WiFi
- *
- ******************
- *Connection LCD: *
- ******************
- * LCD -> ESP     *
- ******************
- * GND -> GND     *
- * VCC -> VIN     *
- * SDA -> D2      *
- * SCL -> D1      *
- ******************
+ * https://github.com/knolleary/pubsubclient/releases/tag/v2.7
+ * 
+ *******************
+ * Connection LCD: *
+ *******************
+ * LCD -> ESP      *
+ *******************
+ * GND -> GND      *
+ * VCC -> VIN      *
+ * SDA -> D2       *
+ * SCL -> D1       *
+ *******************
  *
  * Documentation:
  * https://github.com/FastLED/FastLED/wiki/Basic-usage
@@ -38,26 +40,33 @@
  * https://www.w3schools.com/colors/colors_picker.asp
 */
 
-// Libraries to be able to connect the esp8266 to a WiFi network and to let the LCD and LED work properly.
+// Libraries to be able to connect the esp8266 to a WiFi network, let the LCD and LED work properly and allow us to connect to a MQTT broker and publish/subscribe messages in topics
 #include <Wire.h>
 #include <ESP8266WiFi.h>
 #include <LiquidCrystal_I2C.h>
 #include "FastLED.h"
+#include <PubSubClient.h>
 
 // Led Strip macro definitions
-#define NUM_LEDS 8                              // Number of leds: 8
-#define DATA_PIN 14                             // Connected to GPIO 14, NodeMCU pin D5
-#define BRIGHTNESS 120                          // Sets the brightness of the leds between 0-255 
+#define NUM_LEDS 8                                // Number of leds: 8
+#define DATA_PIN 14                               // Connected to GPIO 14, NodeMCU pin D5
+#define BRIGHTNESS 120                            // Sets the brightness of the leds between 0-255 
 
-// WiFi Setup
+// WiFi setup
 // Variables to connect esp to a network
 // This is my phone/laptop hotspot network so I can use it anywhere
 // IDEA, connect esp with the raspberry pi, that will give the SSID and PASSWORD to the ESP8266 for easy connection
-const char* ssid="spot";                        // YourWiFiName
-const char* password="?Spot!1234";              // YourWiFiPassword
-const char* host="192.168.56.1";                // LOCAL IPv4 ADDRESS...ON CMD WINDOW TYPE ipconfig/all
+const char* ssid="spot";                          // YourWiFiName
+const char* password="?Spot!1234";                // YourWiFiPassword
+const char* host="192.168.56.1";                  // LOCAL IPv4 ADDRESS...ON CMD WINDOW TYPE ipconfig/all
 
-/*LCD SETTINGS*/
+// Information and credentials of the MQTT server
+const char* mqttServer = "tailor.cloudmqtt.com";  // YourMgttServer/IP pc
+const int mqttPort = 11261;                       // YourMqttPort
+const char* mqttUser = "shyoviuu";                // YourMqttUser
+const char* mqttPassword = "Z3sfnnvn3VZU";        // YourMqttUserPassword
+
+// LCD settings
 // set the LCD number of columns and rows
 int LCDColumns = 20;
 int LCDRows = 4;
@@ -69,11 +78,15 @@ LiquidCrystal_I2C lcd(0x27, LCDColumns, LCDRows);
 // This sets up an array that we can manipulate to set/clear led data
 CRGB leds[NUM_LEDS];
 
-/*Hardcoded text to be displayed at the LCD screen, this info must be sent 
-  from the Raspberry Pi, but a connection must be established first*/
+// Hardcoded text to be displayed at the LCD screen, this info must be sent 
+// from the Raspberry Pi, but a connection must be established first
 float used_today_kWh = 8.4f;
 float used_current_kWh = 0.0154f;
-unsigned short int used_today_gas_m3 = 500; // Not negative and from 0 to 65,535, kubieke meter
+unsigned short int used_today_gas_m3 = 500;       // Not negative and from 0 to 65,535, kubieke meter
+
+// MQTT settings
+WiFiClient espClient;
+PubSubClient client(espClient);
 
 void setup(){
   // Open serial connection, to show the result of the program and connect to the WiFi network
@@ -106,48 +119,42 @@ void setup(){
   Serial.printf("Connected to Network", ssid);
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());                 //IP address assigned to your ESP
-  
+
   // Show on LCD
   lcd.setCursor(0,0);
   lcd.printf("Connected to Network");
   delay(2000);
   lcd.clear();
+
+  // Set the ServerName and MQTTPort
+  client.setServer(mqttServer, mqttPort);
+  client.setCallback(callback);
+
+  while(!client.connected()){
+    Serial.println("Connecting to MQTT...");
+ 
+    if(client.connect("ESP8266Client", mqttUser, mqttPassword )){
+       Serial.println("Connected to MQTT Broker");  
+    } 
+    else{
+      Serial.println("failed with state ");
+      Serial.println(client.state());
+      delay(2000);
+    }
+  }
+  client.publish("esp/slimmemeter", "publish test");
+  client.subscribe("esp/slimmemeter");
 }
 
 void loop(){
-  led_algortihm();
-    
-  //Display of how much current is used at the moment and has been used today
-  Serial.println("      Bewust-E");
-  Serial.println("Stroomverbruik:");
-  Serial.printf("Huidig %.4f kWh\n", used_current_kWh);
-  Serial.printf("Dag:   %.4f kWh\n", used_today_kWh);
-  // LCD Scherm
-  lcd.setCursor(6,0);                             // Set cursor to third column, first row
-  lcd.printf("Bewust-E");
-  lcd.setCursor(0,1);                             // Set cursor to first column, second row
-  lcd.print("Stroomverbruik:");
-  lcd.setCursor(0,2);
-  lcd.printf("Huidig:   %.4f kWh", used_current_kWh);
-  lcd.setCursor(0,3);
-  lcd.printf("Dag:      %.4f kWh", used_today_kWh);
-  delay(7000);                                    // Refresh screen every 7 seconds
-  lcd.clear();                                    // Clears the display to print new message
-
-  //Display of how much gas has been used today
-  Serial.println("      Bewust-E");
-  Serial.println("Gasverbruik:");
-  Serial.printf("Dag: %hu m3\n", used_today_gas_m3);
+  // Call the loop method of the PubSubClient, to allow the client to process 
+  // the incomming messages and maintain its connection to the server
+  client.loop();
   
-  // LCD Screen
-  lcd.setCursor(6,0);                             // Set cursor to third column, first row
-  lcd.printf("Bewust-E");
-  lcd.setCursor(0,1);                             // Set cursor to first column, second row
-  lcd.print("Gasverbruik:");
-  lcd.setCursor(0,2);
-  lcd.printf("Dag:          %hu m3", used_today_gas_m3);
-  delay(7000);                                    // Refresh screen every 7 seconds
-  lcd.clear();                                    // Clears the display to print new 
+  // Functions for the led and lcd
+  //led_algortihm();
+  lcd_stroomverbruik();
+  lcd_gasverbruik();
 
 /*
 LCD screen display layout:
@@ -156,7 +163,7 @@ Stroomverbruik:
 Huidig:
 Dag:
 
-5 sec delay
+7 sec delay
 
     Bewust-E
 Gasverbruik:
@@ -179,6 +186,73 @@ Dag:
   }
 }
 
+void callback(char* topic, byte* payload, unsigned int length){ 
+  // Handle message arrived
+  String content = "";
+  char character;
+  for(int i = 0; i < length; i++) {
+      character = payload[i];
+      content.concat(character);
+  }
+
+  Serial.println();
+  Serial.println("*********************");
+  Serial.println("Topic: ");
+  Serial.println(topic);                          // Message published to broker and serial printed
+  Serial.println("Content: ");
+  Serial.println(content);                        // Message returned from broker and serial printed
+  Serial.println("*********************");
+  Serial.println();
+
+  // Set the leds to a specific color based on the data of the incoming messages
+  if(content <= "0.005*kWh"){
+    // The amount of current used at the moment is economical
+    all_leds_green();
+  }
+  if(content >= "0.005*kWh"){
+    // The amount of current used at the moment is to much
+    all_leds_red();
+  }
+}
+
+void lcd_stroomverbruik(){
+  //Display of how much current is used at the moment and has been used today
+  Serial.println("      Bewust-E");
+  Serial.println("Stroomverbruik:");
+  Serial.printf("Huidig %.4f kWh\n", used_current_kWh);
+  Serial.printf("Dag:   %.4f kWh\n", used_today_kWh);
+
+  // LCD Scherm
+  lcd.setCursor(6,0);                             // Set cursor to third column, first row
+  lcd.printf("Bewust-E");
+  lcd.setCursor(0,1);                             // Set cursor to first column, second row
+  lcd.print("Stroomverbruik:");
+  lcd.setCursor(0,2);
+  lcd.printf("Huidig:   %.4f kWh", used_current_kWh);
+  lcd.setCursor(0,3);
+  lcd.printf("Dag:      %.4f kWh", used_today_kWh);
+  delay(3000);                                    // Refresh screen every 7 seconds
+  lcd.clear();                                    // Clears the display to print new message
+}
+
+void lcd_gasverbruik() {
+  //Display of how much gas has been used today
+  Serial.println("      Bewust-E");
+  Serial.println("Gasverbruik:");
+  Serial.printf("Dag: %hu m3\n", used_today_gas_m3);
+  
+  // LCD Screen
+  lcd.setCursor(6,0);                             // Set cursor to third column, first row
+  lcd.printf("Bewust-E");
+  lcd.setCursor(0,1);                             // Set cursor to first column, second row
+  lcd.print("Gasverbruik:");
+  lcd.setCursor(0,2);
+  lcd.printf("Dag:          %hu m3", used_today_gas_m3);
+  delay(3000);                                    // Refresh screen every 7 seconds
+  lcd.clear();                                    // Clears the display to print new
+
+}
+
 void led_algortihm() {
   // PLACE HOLDER
   //leds[ID] = CRGB(red, green, blue) Only use value of 10 to reduce the amp draw of the strip when lit
@@ -191,27 +265,44 @@ void led_algortihm() {
   leds[6]=CRGB(255,0,0);                          // RED
   leds[7]=CRGB(255,0,0);                          // RED
   FastLED.show();
+}
 
-//float max_used_ThisHour_kWh = 0.10000f;
-//if (max_used_ThisHour > used_ThisHour){
-//  // LED Strip must turn Red
-//
-//} else{
-//  // LED Strip must turn Green
-//
-//}
+void all_leds_red(){
+  //leds[ID] = CRGB(red, green, blue) Only use value of 10 to reduce the amp draw of the strip when lit
+  leds[0]=CRGB(255,0,0);                          // RED
+  leds[1]=CRGB(255,0,0);                          // RED
+  leds[2]=CRGB(255,0,0);                          // RED
+  leds[3]=CRGB(255,0,0);                          // RED
+  leds[4]=CRGB(255,0,0);                          // RED
+  leds[5]=CRGB(255,0,0);                          // RED
+  leds[6]=CRGB(255,0,0);                          // RED
+  leds[7]=CRGB(255,0,0);                          // RED
+  FastLED.show();
+}
+
+void all_leds_green(){
+  //leds[ID] = CRGB(red, green, blue) Only use value of 10 to reduce the amp draw of the strip when lit
+  leds[0]=CRGB(0,255,0);                          // GREEN
+  leds[1]=CRGB(0,255,0);                          // GREEN
+  leds[2]=CRGB(0,255,0);                          // GREEN
+  leds[3]=CRGB(0,255,0);                          // GREEN
+  leds[4]=CRGB(0,255,0);                          // GREEN
+  leds[5]=CRGB(0,255,0);                          // GREEN
+  leds[6]=CRGB(0,255,0);                          // GREEN
+  leds[7]=CRGB(0,255,0);                          // GREEN
+  FastLED.show();
 }
 
 // Function all_leds_white sets all the leds white
 void all_leds_white() {
   //leds[ID] = CRGB(red, green, blue) Only use value of 10 to reduce the amp draw of the strip when lit
-  leds[0]=CRGB::White;                          // WHITE
-  leds[1]=CRGB::White;                          // WHITE
-  leds[2]=CRGB::White;                          // WHITE
-  leds[3]=CRGB::White;                          // WHITE
-  leds[4]=CRGB::White;                          // WHITE
-  leds[5]=CRGB::White;                          // WHITE
-  leds[6]=CRGB::White;                          // WHITE
-  leds[7]=CRGB::White;                          // WHITE
+  leds[0]=CRGB::White;                            // WHITE
+  leds[1]=CRGB::White;                            // WHITE
+  leds[2]=CRGB::White;                            // WHITE
+  leds[3]=CRGB::White;                            // WHITE
+  leds[4]=CRGB::White;                            // WHITE
+  leds[5]=CRGB::White;                            // WHITE
+  leds[6]=CRGB::White;                            // WHITE
+  leds[7]=CRGB::White;                            // WHITE
   FastLED.show();
 }
