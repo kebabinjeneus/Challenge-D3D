@@ -23,4 +23,4 @@ git pull -> pulls current branch from github<br/>
 ## Merge Conflicts Documentatie
 https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/resolving-a-merge-conflict-using-the-command-line
   
-Lees vooral de reacties van git, deze geven meestal het command dat je nodig hebt stel iets werkt niet. Ook kan je met tab regels automatssisch aan laten vullen.<br/>
+Lees vooral de reacties van git, deze geven meestal het command dat je nodig hebt stel iets werkt niet. Ook kan je met tab regels automatisch aan laten vullen.<br/>
