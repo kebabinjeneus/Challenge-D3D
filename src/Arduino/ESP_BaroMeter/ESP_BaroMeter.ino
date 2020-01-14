@@ -13,6 +13,7 @@
  * 
  * Missing:
  * Algortihm to display the correct led color
+ * Live presentation of the kWh
  * 
  * TOOLS/BOARD/"Adaruit Feather HUZZAH ESP8266"
  * Additional Boards Manager URL (Paste): http://arduino.esp8266.com/stable/package_esp8266com_index.json
