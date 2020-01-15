@@ -4,13 +4,19 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
 
-public class mockReader {
+public class reader {
 
 
+    /**
+     * Leest de data in vanuit het bestand p1.data
+     *
+     * @param startLine regel waar het inlezen start
+     * @return een meterData object met het datapunt dat start op de regel startLine
+     */
     static meterData readIn(int startLine) {
         File p1 = new File(
                 "C:\\Users\\Lars\\Documents\\Challenge-D3D\\src\\resources\\p1.data"
-        );
+        ); // TODO pad relatief maken en rootpad aan systeem vragen
         Scanner file;
         try {
             file = new Scanner(p1);
@@ -18,7 +24,7 @@ public class mockReader {
             a.printStackTrace();
             return null;
         }
-        for(int i = 1; i < startLine; i++) {
+        for (int i = 1; i < startLine; i++) {
             file.nextLine();
         }
 
@@ -43,4 +49,5 @@ public class mockReader {
         }
         return new meterData(hv, tvl, tvh, g);
     }
+
 }
