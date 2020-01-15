@@ -3,17 +3,20 @@
  * The Challenge
  * ESP BaroMeter
  * 1/10/2020
- * V1.4
+ * V1.5
  * 
  * Includes:
- * LCD connection
- * Led Strip connection
+ * LCD connection.
+ * Led Strip connection.
  * If the WiFi connection fails, then the leds turn white and the display displays Reconnecting to WiFi...
- * Connection with the MQTT Broker CLOUDMQTT: throught this the esp can communicate with the Raspberry Pi, it will read the content that is published bij the Raspberry Pi
+ * Connection with the MQTT Broker CLOUDMQTT: throught this the esp can communicate with the Raspberry Pi, it will read the content that is published bij the Raspberry Pi.
+ * Connection between the Raspberry Pi Zero W and the ESP using the MQTT broker thats running local.
+ * 
  * 
  * Missing:
- * Algortihm to display the correct led color
- * Live presentation of the kWh
+ * Algortihm to display the correct led color.
+ * Live presentation of the kWh.
+ * Receiving JSON Objects from the API and parsing it to displat it on the LCD.
  * 
  * TOOLS/BOARD/"Adaruit Feather HUZZAH ESP8266"
  * Additional Boards Manager URL (Paste): http://arduino.esp8266.com/stable/package_esp8266com_index.json
@@ -22,6 +25,7 @@
  * https://github.com/marcoschwartz/LiquidCrystal_I2C/archive/master.zip
  * https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266WiFi
  * https://github.com/knolleary/pubsubclient/releases/tag/v2.7
+ * https://github.com/bblanchon/ArduinoJson/archive/v5.13.5.zip
  * 
  *******************
  * Connection LCD: *
@@ -47,6 +51,7 @@
 #include <LiquidCrystal_I2C.h>
 #include "FastLED.h"
 #include <PubSubClient.h>
+#include <ArduinoJson.h>
 
 // Led Strip macro definitions
 #define NUM_LEDS 8                                // Number of leds: 8
@@ -54,18 +59,13 @@
 #define BRIGHTNESS 120                            // Sets the brightness of the leds between 0-255 
 
 // WiFi setup
-// Variables to connect esp to a network
-// This is my phone/laptop hotspot network so I can use it anywhere
-// IDEA, connect esp with the raspberry pi, that will give the SSID and PASSWORD to the ESP8266 for easy connection
-const char* ssid="spot";                          // YourWiFiName
-const char* password="?Spot!1234";                // YourWiFiPassword
-const char* host="192.168.56.1";                  // LOCAL IPv4 ADDRESS...ON CMD WINDOW TYPE ipconfig/all
+// Variables to connect the esp to a network
+const char* ssid = "HotspotDaan";                 // YourWiFiName
+const char* password = "tireda1234";              // YourWiFiPassword
+const char* host = "192.168.56.1";                // LOCAL IPv4 ADDRESS...ON CMD WINDOW TYPE ipconfig/all
 
-// Information and credentials of the MQTT server
-const char* mqttServer = "tailor.cloudmqtt.com";  // YourMgttServer/IP pc
-const int mqttPort = 11261;                       // YourMqttPort
-const char* mqttUser = "shyoviuu";                // YourMqttUser
-const char* mqttPassword = "Z3sfnnvn3VZU";        // YourMqttUserPassword
+// Change the variable to your Raspberry Pi IP address, so it connects to your MQTT broker
+const char* mqtt_server = "192.168.43.150";
 
 // LCD settings
 // set the LCD number of columns and rows
@@ -86,16 +86,16 @@ float used_current_kWh = 0.0154f;
 unsigned short int used_today_gas_m3 = 500;       // Not negative and from 0 to 65,535, kubieke meter
 
 // MQTT settings
-WiFiClient espClient;
-PubSubClient client(espClient);
+WiFiClient wifiClient;
+PubSubClient client(mqtt_server, 1883, wifiClient);
 
 void setup(){
   // Open serial connection, to show the result of the program and connect to the WiFi network
   Serial.begin(115200);
   
-  WiFi.mode(WIFI_OFF);                            //Prevents reconnection issue (taking too long to connect)
+  WiFi.mode(WIFI_OFF);                            // Prevents reconnection issue (taking too long to connect)
   delay(1000);
-  WiFi.mode(WIFI_STA);                            //This line hides the viewing of ESP as wifi hotspot
+  WiFi.mode(WIFI_STA);                            // This line hides the viewing of ESP as wifi hotspot
 
   // LCD setup
   lcd.init();                                     // Initialize LCD
@@ -119,7 +119,7 @@ void setup(){
   //If connection is successful, show IP address in serial monitor
   Serial.printf("Connected to Network", ssid);
   Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());                 //IP address assigned to your ESP
+  Serial.println(WiFi.localIP());                 // IP address assigned to your ESP
 
   // Show on LCD
   lcd.setCursor(0,0);
@@ -128,13 +128,13 @@ void setup(){
   lcd.clear();
 
   // Set the ServerName and MQTTPort
-  client.setServer(mqttServer, mqttPort);
+  //client.setServer(mqttServer, mqttPort);
   client.setCallback(callback);
 
   while(!client.connected()){
     Serial.println("Connecting to MQTT...");
  
-    if(client.connect("ESP8266Client", mqttUser, mqttPassword )){
+    if(client.connect("ESP8266Client")){
        Serial.println("Connected to MQTT Broker");  
     } 
     else{
@@ -152,8 +152,7 @@ void loop(){
   // the incomming messages and maintain its connection to the server
   client.loop();
   
-  // Functions for the led and lcd
-  //led_algortihm();
+  // Functions to show data on the LCD
   lcd_stroomverbruik();
   lcd_gasverbruik();
 
@@ -206,13 +205,17 @@ void callback(char* topic, byte* payload, unsigned int length){
   Serial.println();
 
   // Set the leds to a specific color based on the data of the incoming messages
-  if(content <= "0.005*kWh"){
+  if(content < "0.005*kWh"){
     // The amount of current used at the moment is economical
     all_leds_green();
   }
-  if(content >= "0.005*kWh"){
+  if(content > "0.005*kWh"){
     // The amount of current used at the moment is to much
     all_leds_red();
+  }
+  if(content == "0.005*kWh"){
+    // The amount of current used at the moment is to much
+    all_leds_white();
   }
 }
 
@@ -236,7 +239,7 @@ void lcd_stroomverbruik(){
   lcd.clear();                                    // Clears the display to print new message
 }
 
-void lcd_gasverbruik() {
+void lcd_gasverbruik(){
   //Display of how much gas has been used today
   Serial.println("      Bewust-E");
   Serial.println("Gasverbruik:");
@@ -253,7 +256,7 @@ void lcd_gasverbruik() {
   lcd.clear();                                    // Clears the display to print new message
 }
 
-void led_algortihm() {
+void led_algortihm(){
   // PLACE HOLDER
   //leds[ID] = CRGB(red, green, blue) Only use value of 10 to reduce the amp draw of the strip when lit
   leds[0]=CRGB(0,255,0);                          // GREEN
@@ -294,7 +297,7 @@ void all_leds_green(){
 }
 
 // Function all_leds_white sets all the leds white
-void all_leds_white() {
+void all_leds_white(){
   //leds[ID] = CRGB(red, green, blue) Only use value of 10 to reduce the amp draw of the strip when lit
   leds[0]=CRGB::White;                            // WHITE
   leds[1]=CRGB::White;                            // WHITE
