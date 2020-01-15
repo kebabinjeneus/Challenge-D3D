@@ -85,6 +85,17 @@ float used_today_kWh = 8.4f;
 float used_current_kWh = 0.0154f;
 unsigned short int used_today_gas_m3 = 500;       // Not negative and from 0 to 65,535, kubieke meter
 
+// Arduino JSON uses a preallocated memory pool to store the 
+// JsonObject tree, this is done by the StaticJsonBuffer.
+StaticJsonDocument<200> jsonDocument;
+// A char array called json[] to store a sample JSON string:
+char json[] = "{\"huidigVerbruik\":0.241,\"totVerbruikLaag\":2018.594,\"totVerbruikHoog\":2196.689,\"gasverbruik\":1982.857}";
+//JsonObject root = jsonDocument.parseObject(json);
+//deserializeJson(parseDocument, json);
+
+//https://arduinojson.org/v6/doc/upgrade/
+//https://randomnerdtutorials.com/decoding-and-encoding-json-with-arduino-or-esp8266/
+
 // MQTT settings
 WiFiClient wifiClient;
 PubSubClient client(mqtt_server, 1883, wifiClient);
@@ -145,6 +156,15 @@ void setup(){
   }
   client.publish("esp/slimmemeter", "publish test");
   client.subscribe("esp/slimmemeter");
+
+
+  if(!root.success()){
+    Serial.println("parseObject() failed");
+    return false;
+  }
+
+
+  
 }
 
 void loop(){
@@ -190,7 +210,7 @@ void callback(char* topic, byte* payload, unsigned int length){
   // Handle message arrived
   String content = "";
   char character;
-  for(int i = 0; i < length; i++) {
+  for(int i = 0; i < length; i++){
       character = payload[i];
       content.concat(character);
   }
