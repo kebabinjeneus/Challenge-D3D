@@ -16,7 +16,7 @@
  * Missing:
  * Algortihm to display the correct led color.
  * Live presentation of the kWh.
- * Receiving JSON Objects from the API and parsing it to displat it on the LCD.
+ * Sending HTTP request to the API.
  * 
  * TOOLS/BOARD/"Adaruit Feather HUZZAH ESP8266"
  * Additional Boards Manager URL (Paste): http://arduino.esp8266.com/stable/package_esp8266com_index.json
