@@ -40,6 +40,7 @@
  *
  * Documentation:
  * https://github.com/FastLED/FastLED/wiki/Basic-usage
+ * https://randomnerdtutorials.com/decoding-and-encoding-json-with-arduino-or-esp8266/
  * 
  * Color-picker:
  * https://www.w3schools.com/colors/colors_picker.asp
@@ -51,7 +52,7 @@
 #include <LiquidCrystal_I2C.h>
 #include "FastLED.h"
 #include <PubSubClient.h>
-#include <ArduinoJson.h>
+//#include <ArduinoJson.h>
 
 // Led Strip macro definitions
 #define NUM_LEDS 8                                // Number of leds: 8
@@ -65,7 +66,9 @@ const char* password = "tireda1234";              // YourWiFiPassword
 const char* host = "192.168.56.1";                // LOCAL IPv4 ADDRESS...ON CMD WINDOW TYPE ipconfig/all
 
 // Change the variable to your Raspberry Pi IP address, so it connects to your MQTT broker
-const char* mqtt_server = "192.168.43.150";
+const char* mqtt_server = "192.168.137.1";
+// Raspberry: 192.168.43.150
+// Local PC: 192.168.137.1
 
 // LCD settings
 // set the LCD number of columns and rows
@@ -84,17 +87,6 @@ CRGB leds[NUM_LEDS];
 float used_today_kWh = 8.4f;
 float used_current_kWh = 0.0154f;
 unsigned short int used_today_gas_m3 = 500;       // Not negative and from 0 to 65,535, kubieke meter
-
-// Arduino JSON uses a preallocated memory pool to store the 
-// JsonObject tree, this is done by the StaticJsonBuffer.
-StaticJsonDocument<200> jsonDocument;
-// A char array called json[] to store a sample JSON string:
-char json[] = "{\"huidigVerbruik\":0.241,\"totVerbruikLaag\":2018.594,\"totVerbruikHoog\":2196.689,\"gasverbruik\":1982.857}";
-//JsonObject root = jsonDocument.parseObject(json);
-//deserializeJson(parseDocument, json);
-
-//https://arduinojson.org/v6/doc/upgrade/
-//https://randomnerdtutorials.com/decoding-and-encoding-json-with-arduino-or-esp8266/
 
 // MQTT settings
 WiFiClient wifiClient;
@@ -156,15 +148,6 @@ void setup(){
   }
   client.publish("esp/slimmemeter", "publish test");
   client.subscribe("esp/slimmemeter");
-
-
-  if(!root.success()){
-    Serial.println("parseObject() failed");
-    return false;
-  }
-
-
-  
 }
 
 void loop(){
@@ -225,11 +208,11 @@ void callback(char* topic, byte* payload, unsigned int length){
   Serial.println();
 
   // Set the leds to a specific color based on the data of the incoming messages
-  if(content < "0.005*kWh"){
+  if(content < "0.05*kWh"){
     // The amount of current used at the moment is economical
     all_leds_green();
   }
-  if(content > "0.005*kWh"){
+  if(content > "0.05*kWh"){
     // The amount of current used at the moment is to much
     all_leds_red();
   }
