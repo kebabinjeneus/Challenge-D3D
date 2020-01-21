@@ -50,7 +50,7 @@ html, body {
 
 .navbar a {
     display: block;
-    color: black;
+    color: white;
     padding: 10%;
     text-decoration: none;
 }
@@ -73,14 +73,16 @@ html, body {
     text-align: center;
     border-bottom: solid;
     border-bottom-width: 1.5px;
+    border-color: black;
     padding: 2%;
     margin: 0;
+    color: white;
 }
 
 .status {
     list-style-image: url('groen.png');
     list-style-position: inside;
-    color: black; 
+    color: white; 
     padding: 4%;
     padding-left: 1%;
     padding-bottom: 5%;
@@ -119,6 +121,7 @@ html, body {
     padding: 1%;
     border-bottom: solid black 1.5px;
     font-size: 100%;
+    color: white;
 }
 
 .probar1 {
@@ -130,6 +133,7 @@ html, body {
     background-color: yellow;
     text-align: center;
     border-radius: inherit;
+    color: black;
 }
 
 .text {
@@ -155,6 +159,7 @@ html, body {
 .tables td {
     border: 1px solid black;
     padding: 0.5%;
+    color: white;
 }
 
 .tables th {
