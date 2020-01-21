@@ -15,8 +15,8 @@ public class reader {
      */
     static meterData readIn(int startLine) {
         File p1 = new File(
-                "C:\\Users\\Lars\\Documents\\Challenge-D3D\\src\\resources\\p1.data"
-        ); // TODO pad relatief maken en rootpad aan systeem vragen
+                System.getProperty("user.dir") + "\\src\\resources\\p1.data"
+        );
         Scanner file;
         try {
             file = new Scanner(p1);

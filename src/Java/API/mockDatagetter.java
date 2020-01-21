@@ -32,8 +32,8 @@ public class mockDatagetter {
         try {
             String jsonString = gson.toJson(dataPoint);
             FileWriter writer = new FileWriter(
-                    "C:\\Users\\Lars\\Documents\\Challenge-D3D\\src\\resources\\currentDataPoint.json"
-            ); // TODO pad relatief maken en rootpad aan systeem vragen
+                    System.getProperty("user.dir") + "\\src\\resources\\\\currentDataPoint.json"
+            );
             writer.write(jsonString);
             writer.close();
             System.out.printf("%td/%tm/%tY - %tH:%tM:%tS|| Point written || {Gas: %f, Verbruik laag: %f, Verbruik hoog: %f, Huidig verbruik: %f}\n",
@@ -50,7 +50,7 @@ public class mockDatagetter {
      * Methode roept data per datapunt aan en propt het in een lijst
      * @return een ArrayList met meterData objecten, dit is alle data van de meter vertaald in objecten
      */
-    static ArrayList<meterData> getData() { // todo make private
+    private static ArrayList<meterData> getData() {
         ArrayList<meterData> out = new ArrayList<meterData>();
         int line = 31;
         for(int i = 0; true; i++) {
