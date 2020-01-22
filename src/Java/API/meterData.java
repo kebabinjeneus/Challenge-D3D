@@ -30,14 +30,14 @@ public class meterData {
     /**
      * @return totaal stroomverbruik laag tarief
      */
-    public double getDagVerbruikLaag() {
+    public double getTotVerbruikLaag() {
         return totVerbruikLaag;
     }
 
     /**
      * @return totaal stroomverbruik hoog tarief
      */
-    public double getDagVerbruikHoog() {
+    public double getTotVerbruikHoog() {
         return totVerbruikHoog;
     }
 
