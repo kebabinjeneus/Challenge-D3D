@@ -2,8 +2,8 @@
  * Author: Appie Strorman
  * The Challenge
  * ESP BaroMeter
- * 1/10/2020
- * V1.5
+ * 1/21/2020
+ * V1.6
  * 
  * Includes:
  * LCD connection.
@@ -11,11 +11,10 @@
  * If the WiFi connection fails, then the leds turn white and the display displays Reconnecting to WiFi...
  * Connection with the MQTT Broker CLOUDMQTT: throught this the esp can communicate with the Raspberry Pi, it will read the content that is published bij the Raspberry Pi.
  * Connection between the Raspberry Pi Zero W and the ESP using the MQTT broker thats running local.
- * 
+ * Algortihm to display the correct led color.
+ * Live presentation (10 secs) of the kWh.
  * 
  * Missing:
- * Algortihm to display the correct led color.
- * Live presentation of the kWh.
  * Sending HTTP request to the API.
  * 
  * TOOLS/BOARD/"Adaruit Feather HUZZAH ESP8266"
@@ -52,7 +51,7 @@
 #include <LiquidCrystal_I2C.h>
 #include "FastLED.h"
 #include <PubSubClient.h>
-//#include <ArduinoJson.h>
+#include <ArduinoJson.h>
 
 // Led Strip macro definitions
 #define NUM_LEDS 8                                // Number of leds: 8
@@ -82,11 +81,16 @@ LiquidCrystal_I2C lcd(0x27, LCDColumns, LCDRows);
 // This sets up an array that we can manipulate to set/clear led data
 CRGB leds[NUM_LEDS];
 
-// Hardcoded text to be displayed at the LCD screen, this info must be sent 
-// from the Raspberry Pi, but a connection must be established first
-float used_today_kWh = 8.4f;
-float used_current_kWh = 0.0154f;
-unsigned short int used_today_gas_m3 = 500;       // Not negative and from 0 to 65,535, kubieke meter
+// Slimmemeter data, door API verstuur in JSON format, moet nog connectie opstellen tussen ESP en API
+char JSONMessage[] = "{\"huidigVerbruik\":0.227,\"totVerbruikLaag\":2019.052,\"totVerbruikHoog\":2197.635,\"gasverbruik\":1983.182}";
+float huidigVerbruik;
+float totVerbruikLaag;
+float totVerbruikHoog;
+float gasverbruik;
+
+// JSON Parse settings
+StaticJsonBuffer<300> JSONBuffer;
+JsonObject& parsed= JSONBuffer.parseObject(JSONMessage);
 
 // MQTT settings
 WiFiClient wifiClient;
@@ -107,7 +111,7 @@ void setup(){
   // Connection of the led, tells the library that the led is connected on pin 14 and how many leds there are
   FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS);
   FastLED.setBrightness(BRIGHTNESS);              // The led strip must stay off until there is a WiFi connection
-  all_leds_white();                               // Call function all_leds_white to make the led strip white
+  noWiFiConnection();                             // Call function all_leds_white to make the led strip white
   
   // Connect to the WIFI
   WiFi.begin(ssid, password);
@@ -158,24 +162,11 @@ void loop(){
   // Functions to show data on the LCD
   lcd_stroomverbruik();
   lcd_gasverbruik();
-
-/*
-LCD screen display layout:
-    Bewust-E
-Stroomverbruik:
-Huidig:
-Dag:
-
-7 sec delay
-
-    Bewust-E
-Gasverbruik:
-Dag:
-*/
+  parseJSON();
 
   // Wait for connection
   while(WiFi.status() != WL_CONNECTED){
-    all_leds_white();                             // Call function all_leds_white to make the led strip white to indicate that the connection has failed
+    noWiFiConnection();                           // Call function all_leds_white to make the led strip white to indicate that the connection has failed
     Serial.println("No connection");
     lcd.clear();
     lcd.setCursor(0,0);                           // Set cursor to third column, first row
@@ -207,18 +198,62 @@ void callback(char* topic, byte* payload, unsigned int length){
   Serial.println("*********************");
   Serial.println();
 
-  // Set the leds to a specific color based on the data of the incoming messages
-  if(content < "0.05*kWh"){
-    // The amount of current used at the moment is economical
-    all_leds_green();
+  // weinigVerbruik
+  if(content <= "0.03"){
+    weinigVerbruik();
   }
-  if(content > "0.05*kWh"){
-    // The amount of current used at the moment is to much
-    all_leds_red();
+  // weinigMediumVerbruik
+  if(content < "0.14" && content > "0.03"){
+    weinigMediumVerbruik();s
   }
-  if(content == "0.005*kWh"){
-    // The amount of current used at the moment is to much
-    all_leds_white();
+  // mediumVerbruik
+  if(content == "0.14"){
+    mediumVerbruik();
+  }
+  // veelMediumVerbruik
+  if(content > "0.14" && content < "0.25"){
+    veelMediumVerbruik();
+  }
+  // veelVerbruik
+  if(content >= "0.25"){
+    veelVerbruik();
+  }
+}
+
+void parseJSON(){
+  // Parsing 
+  if(!parsed.success()){                            //Check for errors in parsing
+    Serial.println("Parsing failed");
+    delay(5000);
+    return;
+  }
+  // char JSONMessage[] = "{\"huidigVerbruik\":0.227,\"totVerbruikLaag\":2019.052,\"totVerbruikHoog\":2197.635,\"gasverbruik\":1983.182}";
+  huidigVerbruik = parsed["huidigVerbruik"];          // Get the value
+  totVerbruikLaag = parsed["totVerbruikLaag"];      // Get the value
+  totVerbruikHoog = parsed["totVerbruikHoog"];      // Get the value
+  gasverbruik = parsed["gasverbruik"];              // Get the value
+
+  /* led settings */
+  
+  // weinigVerbruik
+  if(huidigVerbruik <= 0.03){
+    weinigVerbruik();
+  }
+  // weinigMediumVerbruik
+  if(huidigVerbruik < 0.14 && huidigVerbruik > 0.03){
+    weinigMediumVerbruik();
+  }
+  // mediumVerbruik
+  if(huidigVerbruik == 0.14){
+    mediumVerbruik();
+  }
+  // veelMediumVerbruik
+  if(huidigVerbruik > 0.14 && huidigVerbruik < 0.25){
+    veelMediumVerbruik();
+  }
+  // veelVerbruik
+  if(huidigVerbruik >= 0.25){
+    veelVerbruik();
   }
 }
 
@@ -226,8 +261,8 @@ void lcd_stroomverbruik(){
   //Display of how much current is used at the moment and has been used today
   Serial.println("      Bewust-E");
   Serial.println("Stroomverbruik:");
-  Serial.printf("Huidig %.4f kWh\n", used_current_kWh);
-  Serial.printf("Dag:   %.4f kWh\n", used_today_kWh);
+  Serial.printf("Huidig: %.3f kWh\n", huidigVerbruik);
+  Serial.printf("Dag:    %.3f kWh\n", totVerbruikHoog);
 
   // LCD Scherm
   lcd.setCursor(6,0);                             // Set cursor to third column, first row
@@ -235,9 +270,9 @@ void lcd_stroomverbruik(){
   lcd.setCursor(0,1);                             // Set cursor to first column, second row
   lcd.print("Stroomverbruik:");
   lcd.setCursor(0,2);
-  lcd.printf("Huidig:   %.4f kWh", used_current_kWh);
+  lcd.printf("Huidig: %.3f kWh", huidigVerbruik);
   lcd.setCursor(0,3);
-  lcd.printf("Dag:      %.4f kWh", used_today_kWh);
+  lcd.printf("Dag:    %.3f kWh", totVerbruikHoog);
   delay(3000);                                    // Refresh screen every 7 seconds
   lcd.clear();                                    // Clears the display to print new message
 }
@@ -246,7 +281,7 @@ void lcd_gasverbruik(){
   //Display of how much gas has been used today
   Serial.println("      Bewust-E");
   Serial.println("Gasverbruik:");
-  Serial.printf("Dag: %hu m3\n", used_today_gas_m3);
+  Serial.printf("Dag: %.3f m3\n", gasverbruik);
   
   // LCD Screen
   lcd.setCursor(6,0);                             // Set cursor to third column, first row
@@ -254,40 +289,15 @@ void lcd_gasverbruik(){
   lcd.setCursor(0,1);                             // Set cursor to first column, second row
   lcd.print("Gasverbruik:");
   lcd.setCursor(0,2);
-  lcd.printf("Dag:          %hu m3", used_today_gas_m3);
+  lcd.printf("Dag: %.3f m3", gasverbruik);
   delay(3000);                                    // Refresh screen every 7 seconds
   lcd.clear();                                    // Clears the display to print new message
 }
 
-void led_algortihm(){
-  // PLACE HOLDER
-  //leds[ID] = CRGB(red, green, blue) Only use value of 10 to reduce the amp draw of the strip when lit
-  leds[0]=CRGB(0,255,0);                          // GREEN
-  leds[1]=CRGB(0,255,0);                          // GREEN
-  leds[2]=CRGB(191,255,0);                        // LIGHT-GREEN
-  leds[3]=CRGB(255,255,0);                        // YELLOW
-  leds[4]=CRGB(255,191,0);                        // ORANGE
-  leds[5]=CRGB(255,64,0);                         // LIGHT-RED
-  leds[6]=CRGB(255,0,0);                          // RED
-  leds[7]=CRGB(255,0,0);                          // RED
-  FastLED.show();
-}
+/* Presets for the led strip */
 
-void all_leds_red(){
-  //leds[ID] = CRGB(red, green, blue) Only use value of 10 to reduce the amp draw of the strip when lit
-  leds[0]=CRGB(255,0,0);                          // RED
-  leds[1]=CRGB(255,0,0);                          // RED
-  leds[2]=CRGB(255,0,0);                          // RED
-  leds[3]=CRGB(255,0,0);                          // RED
-  leds[4]=CRGB(255,0,0);                          // RED
-  leds[5]=CRGB(255,0,0);                          // RED
-  leds[6]=CRGB(255,0,0);                          // RED
-  leds[7]=CRGB(255,0,0);                          // RED
-  FastLED.show();
-}
-
-void all_leds_green(){
-  //leds[ID] = CRGB(red, green, blue) Only use value of 10 to reduce the amp draw of the strip when lit
+// All Green
+void weinigVerbruik(){
   leds[0]=CRGB(0,255,0);                          // GREEN
   leds[1]=CRGB(0,255,0);                          // GREEN
   leds[2]=CRGB(0,255,0);                          // GREEN
@@ -299,8 +309,60 @@ void all_leds_green(){
   FastLED.show();
 }
 
-// Function all_leds_white sets all the leds white
-void all_leds_white(){
+// Green, Green, LightGreen, LightGreen, Yellow, Yellow, Orange, LightRed
+void weinigMediumVerbruik(){
+  leds[0]=CRGB(0,255,0);                          // GREEN
+  leds[1]=CRGB(0,255,0);                          // GREEN
+  leds[2]=CRGB(191,255,0);                        // LIGHT-GREEN
+  leds[3]=CRGB(191,255,0);                        // LIGHT-GREEN
+  leds[4]=CRGB(255,255,0);                        // YELLOW
+  leds[5]=CRGB(255,255,0);                        // YELLOW
+  leds[6]=CRGB(255,191,0);                        // ORANGE
+  leds[7]=CRGB(255,64,0);                         // LIGHT-RED
+  FastLED.show();
+}
+
+// Green, LightGreen, LightGreen, Yellow, Orange, LightRed, LighRed, Red
+void mediumVerbruik(){
+  leds[0]=CRGB(0,255,0);                          // GREEN
+  leds[1]=CRGB(0,255,0);                          // GREEN
+  leds[2]=CRGB(191,255,0);                        // LIGHT-GREEN
+  leds[3]=CRGB(255,255,0);                        // YELLOW
+  leds[4]=CRGB(255,191,0);                        // ORANGE
+  leds[5]=CRGB(255,64,0);                         // LIGHT-RED
+  leds[6]=CRGB(255,0,0);                          // RED
+  leds[7]=CRGB(255,0,0);                          // RED
+  FastLED.show();
+}
+
+// LightGreen, Yellow, Orange, Orange, LightRed, LightRed, Red, Red
+void veelMediumVerbruik(){
+  leds[0] = CRGB(191,255,0);                      // LIGHT-GREEN
+  leds[1] = CRGB(255,255,0);                      // YELLOW
+  leds[2] = CRGB(255,191,0);                      // ORANGE
+  leds[3] = CRGB(255,191,0);                      // ORANGE
+  leds[4] = CRGB(255,64,0);                       // LIGHT-RED
+  leds[5] = CRGB(255,64,0);                       // LIGHT-RED
+  leds[6] = CRGB(255,0,0);                        // RED
+  leds[7] = CRGB(255,0,0);                        // RED
+  FastLED.show();
+}
+
+// Alles Red
+void veelVerbruik() {
+  leds[0]=CRGB(255,0,0);                          // RED
+  leds[1]=CRGB(255,0,0);                          // RED
+  leds[2]=CRGB(255,0,0);                          // RED
+  leds[3]=CRGB(255,0,0);                          // RED
+  leds[4]=CRGB(255,0,0);                          // RED
+  leds[5]=CRGB(255,0,0);                          // RED
+  leds[6]=CRGB(255,0,0);                          // RED
+  leds[7]=CRGB(255,0,0);                          // RED
+  FastLED.show();
+}
+
+// Function turns all the leds white
+void noWiFiConnection(){
   //leds[ID] = CRGB(red, green, blue) Only use value of 10 to reduce the amp draw of the strip when lit
   leds[0]=CRGB::White;                            // WHITE
   leds[1]=CRGB::White;                            // WHITE
