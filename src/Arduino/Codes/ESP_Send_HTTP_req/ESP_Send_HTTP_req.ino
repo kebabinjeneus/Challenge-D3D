@@ -9,7 +9,7 @@
 const char* ssid = "HotspotDaan";         // YourWiFiName
 const char* password = "tireda1234";      // YourWiFiPassword
  
-const char* http_site = "localhost:8080/index.php";
+const char* http_site = "localhost:8080/";
 // test: http://jsonplaceholder.typicode.com/users
 
 int count = 0;

@@ -228,7 +228,7 @@ void parseJSON(){
     return;
   }
   // char JSONMessage[] = "{\"huidigVerbruik\":0.227,\"totVerbruikLaag\":2019.052,\"totVerbruikHoog\":2197.635,\"gasverbruik\":1983.182}";
-  huidigVerbruik = parsed["huidigVerbruik"];          // Get the value
+  huidigVerbruik = parsed["huidigVerbruik"];        // Get the value
   totVerbruikLaag = parsed["totVerbruikLaag"];      // Get the value
   totVerbruikHoog = parsed["totVerbruikHoog"];      // Get the value
   gasverbruik = parsed["gasverbruik"];              // Get the value
