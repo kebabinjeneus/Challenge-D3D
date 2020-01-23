@@ -3,7 +3,7 @@
  * The Challenge
  * ESP BaroMeter
  * 1/23/2020
- * V1.7
+ * V1.8
  * 
  * Includes:
  * LCD connection.
@@ -14,6 +14,7 @@
  * Algortihm to display the correct led color.
  * Live presentation (10 secs) of the kWh on the LCD and on the Serial Monitor
  * Sends HTTP request to the Apache2 server.
+ * JSON parse and assign it to float variables that will be displayed on the LCD.
  * Two buttons, red is the simulation of a washing machine, green is the simulation of a tv.
  * 
  * TOOLS/BOARD/"Adaruit Feather HUZZAH ESP8266"
@@ -50,7 +51,7 @@
 #include <Wire.h>
 #include <ESP8266WiFi.h>
 #include <LiquidCrystal_I2C.h>
-#include "FastLED.h"
+#include <FastLED.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
 
@@ -145,7 +146,7 @@ void setup(){
   lcd.clear();
 
   // Set the ServerName and MQTTPort
-  //client.setServer(mqttServer, mqttPort);
+  // client.setServer(mqttServer, mqttPort);
   client.setCallback(callback);
 
   while(!client.connected()){
@@ -165,23 +166,67 @@ void setup(){
 }
 
 void loop(){
-  // Call the loop method of the PubSubClient, to allow the client to process 
-  // the incomming messages and maintain its connection to the server
+  /*
+   * Call the loop method of the PubSubClient, to allow the client to process 
+   * the incomming messages and maintain its connection to the server
+   */
   client.loop();
   
   // Functions to show data on the LCD
   lcd_stroomverbruik();                           // Function to display the values of "stroomverbruik" on the lcd and in the Serial Monitor
   lcd_gasverbruik();                              // Function to display the values of "gasverbruik" on the lcd and in the Serial Monitor
-  parseJSON();                                    // Function that parse the file it receives from the Apache server from JSON into float values
-  buttonSimulation();                             // Function to simulate a fridge and tv screen
-  algorithmLed();                                 // Function that decides what each individual led needs to display depending on the value of huidigVerbruik
-  checkConnection();                              // Function that checks if the esp is still connected to the WiFi
+
+  /*
+  * Parse the file it receives from the Apache server from JSON into float values
+  */
+  //Check for errors in parsing
+  if(!parsed.success()){
+    Serial.println("Parsing failed");
+    delay(5000);
+    return;
+  }
+  // char JSONMessage[] = "{\"huidigVerbruik\":0.227,\"totVerbruikLaag\":2019.052,\"totVerbruikHoog\":2197.635,\"gasverbruik\":1983.182}";
+  huidigVerbruik = parsed["huidigVerbruik"];      // Get the value
+  totVerbruikLaag = parsed["totVerbruikLaag"];    // Get the value
+  totVerbruikHoog = parsed["totVerbruikHoog"];    // Get the value
+  gasverbruik = parsed["gasverbruik"];            // Get the value
+  
+  /*
+   * Simulate a fridge and tv screen
+   */
+  // Read the state of the pushbutton value
+  buttonStateGreen = digitalRead(buttonGreen);
+  buttonStateRed = digitalRead(buttonRed);
+
+  // Check if the buttons are pressed, if it is, the buttonState is HIGH
+  if(buttonStateGreen == HIGH){
+    Serial.println("Green button pressed");
+    huidigVerbruik = 1.5;
+    veelMediumVerbruik();
+  }
+  if(buttonStateRed == HIGH){
+    Serial.println("Red button pressed");
+    huidigVerbruik = 2.3;
+    veelVerbruik();
+  }
+
+  /*
+   * Function that decides what each individual led needs to display depending on the value of huidigVerbruik
+   */
+  algorithmLed();
+
+  /*
+   * Function that checks if the esp is still connected to the WiFi
+   */
+  checkConnection();
 }
 
-void callback(char* topic, byte* payload, unsigned int length){ 
-  // Handle message arrived
+void callback(char* topic, byte* payload, unsigned int length){
+  // Callback variables
   String content = "";
   char character;
+  
+  // Handle message arrived
   for(int i = 0; i < length; i++){
       character = payload[i];
       content.concat(character);
@@ -197,26 +242,14 @@ void callback(char* topic, byte* payload, unsigned int length){
   Serial.println();
 
   huidigVerbruik = content.toFloat();             // Convert the String content to a float named huidigVerbruik
-  Serial.printf("test %.3f", huidigVerbruik);
+  Serial.printf("Float content: %.3f", huidigVerbruik);
   Serial.println();
   algorithmLed();
 }
 
-void parseJSON(){
-  // Parsing 
-  if(!parsed.success()){                            //Check for errors in parsing
-    Serial.println("Parsing failed");
-    delay(5000);
-    return;
-  }
-  // char JSONMessage[] = "{\"huidigVerbruik\":0.227,\"totVerbruikLaag\":2019.052,\"totVerbruikHoog\":2197.635,\"gasverbruik\":1983.182}";
-  huidigVerbruik = parsed["huidigVerbruik"];        // Get the value
-  totVerbruikLaag = parsed["totVerbruikLaag"];      // Get the value
-  totVerbruikHoog = parsed["totVerbruikHoog"];      // Get the value
-  gasverbruik = parsed["gasverbruik"];              // Get the value
-}
-
-// Decides what happens to the leds
+/* 
+ *  Decides what happens to the leds
+ */
 void algorithmLed(){
   // weinigVerbruik
   if(huidigVerbruik <= 0.08){
@@ -277,23 +310,9 @@ void lcd_gasverbruik(){
   lcd.clear();                                    // Clears the display to print new message
 }
 
-void buttonSimulation(){
-  // Read the state of the pushbutton value
-  buttonStateGreen = digitalRead(buttonGreen);
-  buttonStateRed = digitalRead(buttonRed);
-
-  // Check if the buttons are pressed, if it is, the buttonState is HIGH
-  if(buttonStateGreen == HIGH){
-    Serial.println("Green button pressed");
-    huidigVerbruik = 1.5;
-  }
-  if(buttonStateRed == HIGH){
-    Serial.println("Red button pressed");
-    huidigVerbruik = 2.3;
-  }
-}
-
-// Function that checks if the esp is still connected to the WiFi
+/*
+ * Function that checks if the esp is still connected to the WiFi
+ */
 void checkConnection(){
   // Wait for connection
   while(WiFi.status() != WL_CONNECTED){
@@ -311,6 +330,10 @@ void checkConnection(){
   }
 }
 
+/* 
+ * Presets for the led strip
+ */
+// All Green
 /* Presets for the led strip */
 // All Green
 void weinigVerbruik(){
