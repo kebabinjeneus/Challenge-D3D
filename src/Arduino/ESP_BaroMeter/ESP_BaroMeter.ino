@@ -2,8 +2,8 @@
  * Author: Appie Strorman
  * The Challenge
  * ESP BaroMeter
- * 1/21/2020
- * V1.6
+ * 1/23/2020
+ * V1.7
  * 
  * Includes:
  * LCD connection.
@@ -12,19 +12,27 @@
  * Connection with the MQTT Broker CLOUDMQTT: throught this the esp can communicate with the Raspberry Pi, it will read the content that is published bij the Raspberry Pi.
  * Connection between the Raspberry Pi Zero W and the ESP using the MQTT broker thats running local.
  * Algortihm to display the correct led color.
- * Live presentation (10 secs) of the kWh.
- * 
- * Missing:
- * Sending HTTP request to the API.
+ * Live presentation (10 secs) of the kWh on the LCD and on the Serial Monitor
+ * Sends HTTP request to the Apache2 server.
+ * Two buttons, red is the simulation of a washing machine, green is the simulation of a tv.
  * 
  * TOOLS/BOARD/"Adaruit Feather HUZZAH ESP8266"
  * Additional Boards Manager URL (Paste): http://arduino.esp8266.com/stable/package_esp8266com_index.json
  * 
  * Libraries:
- * https://github.com/marcoschwartz/LiquidCrystal_I2C/archive/master.zip
- * https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266WiFi
- * https://github.com/knolleary/pubsubclient/releases/tag/v2.7
- * https://github.com/bblanchon/ArduinoJson/archive/v5.13.5.zip
+ * ArduinoJSOn:         https://github.com/bblanchon/ArduinoJson/archive/v5.13.5.zip
+ * ESP8266HTTPClient:   https://codeload.github.com/manrueda/ESP8266HttpClient/zip/master
+ * ESP8266WiFi:         https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266WiFi
+ * FastLED:             https://codeload.github.com/FastLED/FastLED/zip/master
+ * Liquid Crystal:      https://github.com/marcoschwartz/LiquidCrystal_I2C/archive/master.zip
+ * PubSubClient(MQTT):  https://codeload.github.com/knolleary/pubsubclient/zip/v2.
+ *
+ * Documentation:
+ * https://github.com/FastLED/FastLED/wiki/Basic-usage
+ * https://randomnerdtutorials.com/decoding-and-encoding-json-with-arduino-or-esp8266/
+ * 
+ * Color-picker:
+ * https://www.w3schools.com/colors/colors_picker.asp
  * 
  *******************
  * Connection LCD: *
@@ -36,13 +44,6 @@
  * SDA -> D2       *
  * SCL -> D1       *
  *******************
- *
- * Documentation:
- * https://github.com/FastLED/FastLED/wiki/Basic-usage
- * https://randomnerdtutorials.com/decoding-and-encoding-json-with-arduino-or-esp8266/
- * 
- * Color-picker:
- * https://www.w3schools.com/colors/colors_picker.asp
 */
 
 // Libraries to be able to connect the esp8266 to a WiFi network, let the LCD and LED work properly and allow us to connect to a MQTT broker and publish/subscribe messages in topics
@@ -58,11 +59,16 @@
 #define DATA_PIN 14                               // Connected to GPIO 14, NodeMCU pin D5
 #define BRIGHTNESS 120                            // Sets the brightness of the leds between 0-255 
 
+// Buttons definitions
+#define buttonGreen 12                            // D6 on esp
+#define buttonRed 13                              // D7 on esp
+int buttonStateGreen = 0;
+int buttonStateRed = 0;
+
 // WiFi setup
 // Variables to connect the esp to a network
 const char* ssid = "HotspotDaan";                 // YourWiFiName
 const char* password = "tireda1234";              // YourWiFiPassword
-const char* host = "192.168.56.1";                // LOCAL IPv4 ADDRESS...ON CMD WINDOW TYPE ipconfig/all
 
 // Change the variable to your Raspberry Pi IP address, so it connects to your MQTT broker
 const char* mqtt_server = "192.168.137.1";
@@ -108,6 +114,10 @@ void setup(){
   lcd.init();                                     // Initialize LCD
   lcd.backlight();                                // turn on LCD backlight
 
+  // Button setup
+  pinMode(buttonGreen, INPUT);
+  pinMode(buttonRed, INPUT);
+  
   // Connection of the led, tells the library that the led is connected on pin 14 and how many leds there are
   FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS);
   FastLED.setBrightness(BRIGHTNESS);              // The led strip must stay off until there is a WiFi connection
@@ -160,24 +170,12 @@ void loop(){
   client.loop();
   
   // Functions to show data on the LCD
-  lcd_stroomverbruik();
-  lcd_gasverbruik();
-  parseJSON();
-
-  // Wait for connection
-  while(WiFi.status() != WL_CONNECTED){
-    noWiFiConnection();                           // Call function all_leds_white to make the led strip white to indicate that the connection has failed
-    Serial.println("No connection");
-    lcd.clear();
-    lcd.setCursor(0,0);                           // Set cursor to third column, first row
-    lcd.printf("No connection");
-    lcd.setCursor(0,1);                           // Set cursor to first column, second row
-    lcd.printf("Please reset device");
-    delay(1000);
-
-    // Reconnect to the WiFi
-    WiFi.begin(ssid, password);
-  }
+  lcd_stroomverbruik();                           // Function to display the values of "stroomverbruik" on the lcd and in the Serial Monitor
+  lcd_gasverbruik();                              // Function to display the values of "gasverbruik" on the lcd and in the Serial Monitor
+  parseJSON();                                    // Function that parse the file it receives from the Apache server from JSON into float values
+  buttonSimulation();                             // Function to simulate a fridge and tv screen
+  algorithmLed();                                 // Function that decides what each individual led needs to display depending on the value of huidigVerbruik
+  checkConnection();                              // Function that checks if the esp is still connected to the WiFi
 }
 
 void callback(char* topic, byte* payload, unsigned int length){ 
@@ -198,26 +196,10 @@ void callback(char* topic, byte* payload, unsigned int length){
   Serial.println("*********************");
   Serial.println();
 
-  // weinigVerbruik
-  if(content <= "0.03"){
-    weinigVerbruik();
-  }
-  // weinigMediumVerbruik
-  if(content < "0.14" && content > "0.03"){
-    weinigMediumVerbruik();s
-  }
-  // mediumVerbruik
-  if(content == "0.14"){
-    mediumVerbruik();
-  }
-  // veelMediumVerbruik
-  if(content > "0.14" && content < "0.25"){
-    veelMediumVerbruik();
-  }
-  // veelVerbruik
-  if(content >= "0.25"){
-    veelVerbruik();
-  }
+  huidigVerbruik = content.toFloat();             // Convert the String content to a float named huidigVerbruik
+  Serial.printf("test %.3f", huidigVerbruik);
+  Serial.println();
+  algorithmLed();
 }
 
 void parseJSON(){
@@ -232,27 +214,28 @@ void parseJSON(){
   totVerbruikLaag = parsed["totVerbruikLaag"];      // Get the value
   totVerbruikHoog = parsed["totVerbruikHoog"];      // Get the value
   gasverbruik = parsed["gasverbruik"];              // Get the value
+}
 
-  /* led settings */
-  
+// Decides what happens to the leds
+void algorithmLed(){
   // weinigVerbruik
-  if(huidigVerbruik <= 0.03){
+  if(huidigVerbruik <= 0.08){
     weinigVerbruik();
   }
   // weinigMediumVerbruik
-  if(huidigVerbruik < 0.14 && huidigVerbruik > 0.03){
+  if(huidigVerbruik > 0.08 && huidigVerbruik < 0.84){
     weinigMediumVerbruik();
   }
   // mediumVerbruik
-  if(huidigVerbruik == 0.14){
+  if(huidigVerbruik >= 0.84 && huidigVerbruik <= 1.24){
     mediumVerbruik();
   }
   // veelMediumVerbruik
-  if(huidigVerbruik > 0.14 && huidigVerbruik < 0.25){
+  if(huidigVerbruik > 1.24 && huidigVerbruik < 2.0){
     veelMediumVerbruik();
   }
   // veelVerbruik
-  if(huidigVerbruik >= 0.25){
+  if(huidigVerbruik >= 2.0){
     veelVerbruik();
   }
 }
@@ -294,8 +277,41 @@ void lcd_gasverbruik(){
   lcd.clear();                                    // Clears the display to print new message
 }
 
-/* Presets for the led strip */
+void buttonSimulation(){
+  // Read the state of the pushbutton value
+  buttonStateGreen = digitalRead(buttonGreen);
+  buttonStateRed = digitalRead(buttonRed);
 
+  // Check if the buttons are pressed, if it is, the buttonState is HIGH
+  if(buttonStateGreen == HIGH){
+    Serial.println("Green button pressed");
+    huidigVerbruik = 1.5;
+  }
+  if(buttonStateRed == HIGH){
+    Serial.println("Red button pressed");
+    huidigVerbruik = 2.3;
+  }
+}
+
+// Function that checks if the esp is still connected to the WiFi
+void checkConnection(){
+  // Wait for connection
+  while(WiFi.status() != WL_CONNECTED){
+    noWiFiConnection();                           // Call function all_leds_white to make the led strip white to indicate that the connection has failed
+    Serial.println("No connection");
+    lcd.clear();
+    lcd.setCursor(0,0);                           // Set cursor to third column, first row
+    lcd.printf("No connection");
+    lcd.setCursor(0,1);                           // Set cursor to first column, second row
+    lcd.printf("Please reset device");
+    delay(1000);
+
+    // Reconnect to the WiFi
+    WiFi.begin(ssid, password);
+  }
+}
+
+/* Presets for the led strip */
 // All Green
 void weinigVerbruik(){
   leds[0]=CRGB(0,255,0);                          // GREEN
