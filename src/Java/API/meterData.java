@@ -4,7 +4,7 @@ public class meterData {
     private double huidigVerbruik;
     private double totVerbruikLaag;
     private double totVerbruikHoog;
-    private double gasverbruik;
+    private double gasVerbruik;
 
     /**
      *
@@ -13,39 +13,45 @@ public class meterData {
      * @param tvh totaal verbruik stroom hoog tarief
      * @param g gasverbruik
      */
-    public meterData(double hv, double tvl, double tvh, double g) {
+    meterData(double hv, double tvl, double tvh, double g) {
         huidigVerbruik = hv;
         totVerbruikLaag = tvl;
         totVerbruikHoog = tvh;
-        gasverbruik = g;
+        gasVerbruik = g;
     }
 
     /**
      * @return huidig stroomverbruik
      */
-    public double getHuidigVerbruik() {
+    double getHuidigVerbruik() {
         return huidigVerbruik;
     }
 
     /**
      * @return totaal stroomverbruik laag tarief
      */
-    public double getTotVerbruikLaag() {
+    double getTotVerbruikLaag() {
         return totVerbruikLaag;
     }
 
     /**
      * @return totaal stroomverbruik hoog tarief
      */
-    public double getTotVerbruikHoog() {
+    double getTotVerbruikHoog() {
         return totVerbruikHoog;
     }
 
     /**
      * @return gasverbruik
      */
-    public double getGasverbruik() {
-        return gasverbruik;
+    double getGasVerbruik() {
+        return gasVerbruik;
+    }
+
+    public String toString() {
+        String out = String.format("Point read:\nhv: %.3f\ttvl: %.3f\ttvh: %.3f\tg: %.3f\n",
+                huidigVerbruik, totVerbruikLaag, totVerbruikHoog, gasVerbruik);
+        return out;
     }
 
 }

@@ -6,15 +6,16 @@ import java.sql.SQLException;
 
 class BasicQueries {
     private static final String DB_DRIVER = "com.mysql.cj.jdbc.Driver";
-    private static final String DB_CONNECTION = "jdbc:mysql://192.168.43.150:3306/meterData";
-    private static final String DB_USER = "root";
-    private static final String DB_PASSWORD = "yoloww";
+    private static final String DB_CONNECTION = "jdbc:mysql://localhost:3306/meterData"; // 192.168.43.150:3306/meterData
+    private static final String DB_USER = "root"; //        remote: "BewustE"                locale: "root"
+    private static final String DB_PASSWORD = ""; //        remote: "yoloww" OR "raspberry"    locale: ""
 
     private BasicQueries() {
     }
 
     /**
-     * Gets db connection.      *      * @return the db connection
+     * Gets db connection.
+     * @return the db connection
      */
     static Connection getDbConnection() throws SQLException {
         Connection dbConnection = null;
@@ -30,7 +31,8 @@ class BasicQueries {
     }
 
     /**
-     * Close con.      *      * @param conn the conn
+     * Close con.
+     * @param conn the conn
      */
     static void closeCon(Connection conn) {
         if (conn != null) {

@@ -1,18 +1,28 @@
+import API.reader;
 import API.meterData;
 
-import java.sql.SQLException;
-import java.util.ArrayList;
+import static API.inputQuerys.dbFiller;
 
 public class Main {
     public static void main(String[] args) {
-        public static void main(String[] args) throws SQLException {
-            ArrayList<meterData> all = getData();
-            System.out.println("The program will run for " + all.size()/6 + " minutes");
-            for (meterData dataPoint : all) {
-                jsonWriter(dataPoint);
-                dbFiller(dataPoint);
-                wait10();
-            }
+        reader read = new reader();
+        while(read.getCurrentLine() < 18400) {
+            meterData dataPoint = read.getNextDatapoint();
+            dbFiller(dataPoint);
+            System.out.println(dataPoint.toString());
+            wait10();
+        }
+    }
+
+
+    /**
+     * Laat het programma 10 seconden wachten
+     */
+    private static void wait10() {
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 }
