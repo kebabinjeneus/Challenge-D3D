@@ -54,6 +54,9 @@
 #include <FastLED.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
+#include <Arduino.h>
+#include <avdweb_VirtualDelay.h>
+#include <Streaming.h>
 
 // Led Strip macro definitions
 #define NUM_LEDS 8                                // Number of leds: 8
@@ -102,6 +105,8 @@ JsonObject& parsed= JSONBuffer.parseObject(JSONMessage);
 // MQTT settings
 WiFiClient wifiClient;
 PubSubClient client(mqtt_server, 1883, wifiClient);
+
+VirtualDelay timerLCD1, timerLCD2;
 
 void setup(){
   // Open serial connection, to show the result of the program and connect to the WiFi network
@@ -172,25 +177,68 @@ void loop(){
    */
   client.loop();
   
-  // Functions to show data on the LCD
-  lcd_stroomverbruik();                           // Function to display the values of "stroomverbruik" on the lcd and in the Serial Monitor
-  lcd_gasverbruik();                              // Function to display the values of "gasverbruik" on the lcd and in the Serial Monitor
+  //Display of how much current is used at the moment and has been used today
+  Serial.println("\n***********************");
+  Serial.println("      Bewust-E");
+  Serial.println("Stroomverbruik:");
+  Serial.printf("Huidig: %.3f kWh\n", huidigVerbruik);
+  Serial.printf("Dag:    %.3f kWh\n", totVerbruikHoog);
+  Serial.println("-----------------------");
+  
+  int stroomlcd = 0;
+  while(stroomlcd <= 3000){
+    delay(1);
+    stroomlcd++;
+    parseJSON();
+    buttonSimulation();
+    
+    // LCD screen
+    lcd.setCursor(6,0);                             // Set cursor to third column, first row
+    lcd.printf("Bewust-E");
+    lcd.setCursor(0,1);                             // Set cursor to first column, second row
+    lcd.printf("Stroomverbruik:");
+    lcd.setCursor(0,2);
+    lcd.printf("Huidig: %.3f kWh", huidigVerbruik);
+    lcd.setCursor(0,3);
+    lcd.printf("Dag:    %.3f kWh", totVerbruikHoog);
+  }
+  lcd.clear();                                    // Clears the display to print new message
+  
+  //Display of how much gas has been used today
+  Serial.println("      Bewust-E");
+  Serial.println("Gasverbruik:");
+  Serial.printf("Dag: %.3f m3\n", gasverbruik);
+  Serial.println("***********************");
+
+  int gaslcd = 0;
+  while(gaslcd <= 3000){
+    delay(1);
+    gaslcd++;
+    parseJSON();
+    buttonSimulation();
+    
+    // LCD screen
+    lcd.setCursor(6,0);                             // Set cursor to third column, first row
+    lcd.printf("Bewust-E");
+    lcd.setCursor(0,1);                             // Set cursor to first column, second row
+    lcd.print("Gasverbruik:");
+    lcd.setCursor(0,2);
+    lcd.printf("Dag: %.3f m3", gasverbruik);
+  }
+  lcd.clear();                                    // Clears the display to print new message
 
   /*
-  * Parse the file it receives from the Apache server from JSON into float values
-  */
-  //Check for errors in parsing
-  if(!parsed.success()){
-    Serial.println("Parsing failed");
-    delay(5000);
-    return;
-  }
-  // char JSONMessage[] = "{\"huidigVerbruik\":0.227,\"totVerbruikLaag\":2019.052,\"totVerbruikHoog\":2197.635,\"gasverbruik\":1983.182}";
-  huidigVerbruik = parsed["huidigVerbruik"];      // Get the value
-  totVerbruikLaag = parsed["totVerbruikLaag"];    // Get the value
-  totVerbruikHoog = parsed["totVerbruikHoog"];    // Get the value
-  gasverbruik = parsed["gasverbruik"];            // Get the value
-  
+   * Function that decides what each individual led needs to display depending on the value of huidigVerbruik
+   */
+  algorithmLed();
+
+  /*
+   * Function that checks if the esp is still connected to the WiFi
+   */
+  checkConnection();
+}
+
+void buttonSimulation(){
   /*
    * Simulate a fridge and tv screen
    */
@@ -202,23 +250,28 @@ void loop(){
   if(buttonStateGreen == HIGH){
     Serial.println("Green button pressed");
     huidigVerbruik = 1.5;
-    veelMediumVerbruik();
   }
   if(buttonStateRed == HIGH){
     Serial.println("Red button pressed");
     huidigVerbruik = 2.3;
-    veelVerbruik();
   }
+}
 
+void parseJSON(){
   /*
-   * Function that decides what each individual led needs to display depending on the value of huidigVerbruik
+   * Parse the file it receives from the Apache server from JSON into float values
    */
-  algorithmLed();
-
-  /*
-   * Function that checks if the esp is still connected to the WiFi
-   */
-  checkConnection();
+  //Check for errors in parsing
+  if(!parsed.success()){
+    Serial.println("Parsing failed");
+    delay(5000);
+    return;
+  }
+  // char JSONMessage[] = "{\"huidigVerbruik\":0.227,\"totVerbruikLaag\":2019.052,\"totVerbruikHoog\":2197.635,\"gasverbruik\":1983.182}";
+  huidigVerbruik = parsed["huidigVerbruik"];      // Get the value
+  totVerbruikLaag = parsed["totVerbruikLaag"];    // Get the value
+  totVerbruikHoog = parsed["totVerbruikHoog"];    // Get the value
+  gasverbruik = parsed["gasverbruik"];            // Get the value
 }
 
 void callback(char* topic, byte* payload, unsigned int length){
@@ -244,7 +297,6 @@ void callback(char* topic, byte* payload, unsigned int length){
   huidigVerbruik = content.toFloat();             // Convert the String content to a float named huidigVerbruik
   Serial.printf("Float content: %.3f", huidigVerbruik);
   Serial.println();
-  algorithmLed();
 }
 
 /* 
@@ -273,43 +325,6 @@ void algorithmLed(){
   }
 }
 
-void lcd_stroomverbruik(){
-  //Display of how much current is used at the moment and has been used today
-  Serial.println("      Bewust-E");
-  Serial.println("Stroomverbruik:");
-  Serial.printf("Huidig: %.3f kWh\n", huidigVerbruik);
-  Serial.printf("Dag:    %.3f kWh\n", totVerbruikHoog);
-
-  // LCD Scherm
-  lcd.setCursor(6,0);                             // Set cursor to third column, first row
-  lcd.printf("Bewust-E");
-  lcd.setCursor(0,1);                             // Set cursor to first column, second row
-  lcd.print("Stroomverbruik:");
-  lcd.setCursor(0,2);
-  lcd.printf("Huidig: %.3f kWh", huidigVerbruik);
-  lcd.setCursor(0,3);
-  lcd.printf("Dag:    %.3f kWh", totVerbruikHoog);
-  delay(3000);                                    // Refresh screen every 7 seconds
-  lcd.clear();                                    // Clears the display to print new message
-}
-
-void lcd_gasverbruik(){
-  //Display of how much gas has been used today
-  Serial.println("      Bewust-E");
-  Serial.println("Gasverbruik:");
-  Serial.printf("Dag: %.3f m3\n", gasverbruik);
-  
-  // LCD Screen
-  lcd.setCursor(6,0);                             // Set cursor to third column, first row
-  lcd.printf("Bewust-E");
-  lcd.setCursor(0,1);                             // Set cursor to first column, second row
-  lcd.print("Gasverbruik:");
-  lcd.setCursor(0,2);
-  lcd.printf("Dag: %.3f m3", gasverbruik);
-  delay(3000);                                    // Refresh screen every 7 seconds
-  lcd.clear();                                    // Clears the display to print new message
-}
-
 /*
  * Function that checks if the esp is still connected to the WiFi
  */
@@ -333,8 +348,6 @@ void checkConnection(){
 /* 
  * Presets for the led strip
  */
-// All Green
-/* Presets for the led strip */
 // All Green
 void weinigVerbruik(){
   leds[0]=CRGB(0,255,0);                          // GREEN
