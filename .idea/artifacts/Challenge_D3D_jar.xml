@@ -1,0 +1,10 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="Challenge-D3D:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/Challenge_D3D_jar</output-path>
+    <root id="archive" name="Challenge-D3D.jar">
+      <element id="module-output" name="Challenge-D3D" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/resources/mysql-connector-java-8.0.19.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/resources/gson-2.8.6.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
