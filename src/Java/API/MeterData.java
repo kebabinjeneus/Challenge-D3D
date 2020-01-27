@@ -1,6 +1,6 @@
 package API;
 
-public class meterData {
+public class MeterData {
     private double huidigVerbruik;
     private double totVerbruikLaag;
     private double totVerbruikHoog;
@@ -13,7 +13,7 @@ public class meterData {
      * @param tvh totaal verbruik stroom hoog tarief
      * @param g gasverbruik
      */
-    meterData(double hv, double tvl, double tvh, double g) {
+    MeterData(double hv, double tvl, double tvh, double g) {
         huidigVerbruik = hv;
         totVerbruikLaag = tvl;
         totVerbruikHoog = tvh;

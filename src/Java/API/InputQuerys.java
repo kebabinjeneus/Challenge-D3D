@@ -6,12 +6,12 @@ import java.sql.SQLException;
 
 import static API.BasicQueries.closeCon;
 
-public class inputQuerys {
+public class InputQuerys {
     /**
      * @param dataPoint het huidige datapunt dat in de database geyeet dient te worden.
      * @throws SQLException
      */
-    public static void dbFiller(meterData dataPoint) {
+    public static void dbFiller(MeterData dataPoint) {
         Connection conn = null;
         try {
             conn = BasicQueries.getDbConnection();

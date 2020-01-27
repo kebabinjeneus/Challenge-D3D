@@ -1,11 +1,15 @@
 package API;
 
+import Properties.Read;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-public class reader {
+import static Properties.Read.*;
+
+public class Reader {
 
 
     /**
@@ -14,11 +18,14 @@ public class reader {
      * @param startLine regel waar het inlezen start
      * @return een meterData object met het datapunt dat start op de regel startLine
      */
-    private static meterData readIn(int startLine) {
-        File p1 = new File(
-                System.getProperty("user.dir") + "\\resources\\p1.data"
-                // TODO change to proper location on pi -> /home/p1.data <- oid
-        );
+    private static MeterData readIn(int startLine) {
+        String location = readValue("Locatie_P1_mock");
+        if (location == null) {
+            System.out.println("No file in instellingen.properties!");
+            return null;
+        }
+        File p1 = new File(location);   // TODO change to proper location on pi -> /home/p1.data <- oid
+        //System.getProperty("user.dir") + "\\resources\\p1.data"
         Scanner file;
         try {
             file = new Scanner(p1);
@@ -49,37 +56,44 @@ public class reader {
                 }
             }
         }
-        return new meterData(hv, tvl, tvh, g);
+        return new MeterData(hv, tvl, tvh, g);
     }
 
     /**
      * Methode roept data per datapunt aan en propt het in een lijst
+     *
      * @return een ArrayList met meterData objecten, dit is alle data van de meter vertaald in objecten
      */
-    public static ArrayList<meterData> getAllData() {
-        ArrayList<meterData> out = new ArrayList<meterData>();
+    public static ArrayList<MeterData> getAllData() {
+        ArrayList<MeterData> out = new ArrayList<MeterData>();
         int line = 31;
-        for(int i = 0; true; i++) {
+        for (int i = 0; true; i++) {
             out.add(readIn(line));
             line += 26;
-            if(line > 18400) {
+            if (line > 18400) {
                 break;
             }
         }
         return out;
     }
 
-    public reader() {
+    public Reader() {
 
     }
+
     private int currentLine = 31;
 
-    public meterData getNextDatapoint() {
-        meterData Datapoint = readIn(currentLine);
+    public MeterData getNextDatapoint() {
+        MeterData Datapoint = readIn(currentLine);
         lineUpper();
         return Datapoint;
     }
 
-    public int getCurrentLine() { return currentLine; }
-    private void lineUpper() { currentLine+=26; }
+    public int getCurrentLine() {
+        return currentLine;
+    }
+
+    private void lineUpper() {
+        currentLine += 26;
+    }
 }

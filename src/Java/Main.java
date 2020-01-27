@@ -1,14 +1,19 @@
-import API.reader;
-import API.meterData;
+import API.Reader;
+import API.MeterData;
 
-import static API.inputQuerys.dbFiller;
+import static API.InputQuerys.dbFiller;
+import static API.Json.jsonWriter;
+import static Properties.Store.initialiseerProperties;
+import static Properties.Store.storeValue;
 
 public class Main {
     public static void main(String[] args) {
-        reader read = new reader();
+        //initialiseerProperties();
+        Reader read = new Reader();
         while(read.getCurrentLine() < 18400) {
-            meterData dataPoint = read.getNextDatapoint();
-            dbFiller(dataPoint);
+            MeterData dataPoint = read.getNextDatapoint();
+//            jsonWriter(dataPoint);
+//            dbFiller(dataPoint);
             System.out.println(dataPoint.toString());
             wait10();
         }

@@ -4,17 +4,22 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
+import static Properties.Read.readValue;
+
 class BasicQueries {
     private static final String DB_DRIVER = "com.mysql.cj.jdbc.Driver";
-    private static final String DB_CONNECTION = "jdbc:mysql://localhost:3306/meterData"; // 192.168.43.150:3306/meterData
-    private static final String DB_USER = "root"; //        remote: "BewustE"                locale: "root"
-    private static final String DB_PASSWORD = ""; //        remote: "yoloww" OR "raspberry"    locale: ""
+    //"jdbc:mysql://localhost:3306/meterData"; // 192.168.43.150:3306/meterData
+    private static final String DB_CONNECTION = "jdbc:mysql://" + readValue("IP_server") + ":"
+            + readValue("Poort_DB") + "/" + readValue("Naam_DB");
+    private static final String DB_USER = readValue("Usr_DB"); //        remote: "BewustE"                locale: "root"
+    private static final String DB_PASSWORD = readValue("Ww_DB"); //        remote: "yoloww" OR "raspberry"    locale: ""
 
     private BasicQueries() {
     }
 
     /**
      * Gets db connection.
+     *
      * @return the db connection
      */
     static Connection getDbConnection() throws SQLException {
@@ -32,6 +37,7 @@ class BasicQueries {
 
     /**
      * Close con.
+     *
      * @param conn the conn
      */
     static void closeCon(Connection conn) {
