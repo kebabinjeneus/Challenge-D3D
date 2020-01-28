@@ -8,4 +8,3 @@ CREATE TABLE verbruik (
 	gasVerbruik double(8, 3) NOT NULL,
 	PRIMARY KEY (tijd)
 );
-

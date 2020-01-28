@@ -41,6 +41,8 @@ Lees vooral de reacties van git, deze geven meestal het command dat je nodig heb
 13. $cd path/to/your/app<br/>
 14. $php -S localhost:8000<br/>
 
+post_req.php file moet geplaatst worden in de folder /var/www/html/php/<br/>>
+
 Documentatie:<br/>
 - http://www.bytesofgigabytes.com/mqtt/installing-mqtt-broker-on-windows/<br/>
 - http://www.steves-internet-guide.com/mosquitto_pub-sub-clients/<br/>
